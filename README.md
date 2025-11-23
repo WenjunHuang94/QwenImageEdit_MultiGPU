@@ -91,7 +91,8 @@ The rewritten pipeline takes about **20 minutes** and is suitable for most use c
 If you just want to **inspect LoRA training quality**,  
 use **512×512** resolution during inference.
 
-This significantly reduces compute load and speeds up iteration.
+This significantly reduces compute load and speeds up iteration.The whole generation will cost **only 6 mins**(50 steps).
+> By going a step further and turning off CFG entirely—for instance, (by providing an empty negative prompt) the runtime drops to around 3 minutes.
 
 ---
 
