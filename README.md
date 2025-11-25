@@ -129,5 +129,7 @@ qwen_image/
 - Transformer behaviors can be easily customized through modifications to wrapped_tool.py
 - Use **512 resolution** when quickly checking training results  
 
-Enjoy your multi‑GPU Qwen‑Image‑Edit workflow ❤️
+Enjoy your multi‑GPU Qwen‑Image‑Edit workflow. ❤️
+
+If you find this project helpful or interesting, a star would be greatly appreciated! Your support motivates us to keep improving. ⭐
 
