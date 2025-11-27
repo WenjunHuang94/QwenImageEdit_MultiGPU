@@ -131,5 +131,10 @@ qwen_image/
 
 Enjoy your multi‑GPU Qwen‑Image‑Edit workflow. ❤️
 
+
+## Star History
+
 If you find this project helpful or interesting, a star would be greatly appreciated! Your support motivates us to keep improving. ⭐
 
+
+[![Star History Chart](https://api.star-history.com/svg?repos=SuyangLumiere/QwenImageEdit_MultiGPU&type=date&legend=top-left)](https://www.star-history.com/#SuyangLumiere/QwenImageEdit_MultiGPU&type=date&legend=top-left)
