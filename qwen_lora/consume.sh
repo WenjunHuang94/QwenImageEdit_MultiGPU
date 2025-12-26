@@ -20,4 +20,4 @@ python pp_consumer.py \
     --checkpointing_steps 200 \
     --txt_cache_dir "cache/text_embs/" \
     --img_cache_dir "cache/img_embs/" \
-    --control_img_cache_dir "img_embs_control/"
+    --control_img_cache_dir "cache/img_embs_control/"

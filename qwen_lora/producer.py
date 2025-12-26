@@ -15,6 +15,12 @@ import math
 
 # > tools -----------------------------------------------------------------------------
 
+def get_image_files(directory):
+    """Get all image files (.png and .jpg) from directory recursively."""
+    png_files = list(directory.rglob("*.png"))
+    jpg_files = list(directory.rglob("*.jpg"))
+    return png_files + jpg_files
+
 # calculate dimension for easy divised by 32
 def calculate_dimensions(target_area, ratio):
     width = math.sqrt(target_area * ratio)
@@ -80,7 +86,8 @@ def main():
     with torch.inference_mode():
 
         if args.prompt_with_image:
-            for img_name in tqdm(ctrl_dir.rglob("*.png")):
+            ctrl_files = get_image_files(ctrl_dir) if ctrl_dir else []
+            for img_name in tqdm(ctrl_files):
                 img = Image.open(img_name).convert('RGB')
                 calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
                 prompt_image = text_encoding_pipeline.image_processor.resize(img, calculated_height, calculated_width)
@@ -114,7 +121,8 @@ def main():
 
     # > image encoding
     with torch.inference_mode():
-        for img_name in tqdm(img_dir.rglob("*.png")):
+        img_files = get_image_files(img_dir)
+        for img_name in tqdm(img_files):
             img = Image.open(img_name).convert('RGB')
             calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
             img = resizer.resize(img, calculated_height, calculated_width)
@@ -133,7 +141,8 @@ def main():
     # > contorl image encoding
     if ctrl_dir is not None:
         with torch.inference_mode():
-            for img_name in tqdm(ctrl_dir.rglob("*.png")):
+            ctrl_files = get_image_files(ctrl_dir)
+            for img_name in tqdm(ctrl_files):
                 img = Image.open(img_name).convert('RGB')
                 calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
                 img = resizer.resize(img, calculated_height, calculated_width)
