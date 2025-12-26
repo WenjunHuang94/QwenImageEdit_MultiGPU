@@ -48,7 +48,7 @@ def main():
     parser.add_argument("--prompt_with_image", action="store_true", help="load VLM to rephrase prompt but need to be set to True")
     args = parser.parse_args()
 
-    weight_dtype = torch.float16
+    weight_dtype = torch.bfloat16
     device = torch.device("cuda:1")
 
     
