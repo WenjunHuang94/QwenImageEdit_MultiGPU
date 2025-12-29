@@ -1,7 +1,7 @@
 #! /bin/bash
-MODEL_PATH="/rico_model/qwen_image_edit"
-IMG="output/"
-CTRL="input/"
+MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwen-Image-Edit"
+IMG="images2/"
+CTRL="control_images2"
 CACHE="cache/"
 
 RESOLUTION=$((512*512))

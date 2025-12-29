@@ -13,7 +13,7 @@ def parse_args():
 
     # Paths / Basics
     parser.add_argument("--output_img", type=str, default="qwen_test.png")
-    parser.add_argument("--pretrained_model", type=str, default="qwen_image_edit")
+    parser.add_argument("--pretrained_model", type=str, default="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwen-Image-Edit")
 
     # LoRA / Quant
     parser.add_argument("--lora_weight", type=str, default="checkpoint-1/")

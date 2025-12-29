@@ -1,8 +1,8 @@
 #! /bin/bash
-MODEL_PATH="/rico_model/qwen_image_edit"
+MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwen-Image-Edit"
 TXT="cache/text_embs/"
 IMG="cache/img_embs/"
-CTRL="img_embs_control/"
+CTRL="cache/img_embs_control/"
 OUTPUT="result/"
 
 LORA_RANK=64

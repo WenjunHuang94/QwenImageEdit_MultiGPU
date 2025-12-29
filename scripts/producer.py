@@ -10,9 +10,26 @@ import numpy as np
 from diffusers import QwenImageEditPipeline
 from QwenEdit import calculate_dimensions
 import gc
+import math
 
 
 # > tools -----------------------------------------------------------------------------
+
+def get_image_files(directory):
+    """Get all image files (.png and .jpg) from directory recursively."""
+    png_files = list(directory.rglob("*.png"))
+    jpg_files = list(directory.rglob("*.jpg"))
+    return png_files + jpg_files
+
+# calculate dimension for easy divised by 32
+def calculate_dimensions(target_area, ratio):
+    width = math.sqrt(target_area * ratio)
+    height = width / ratio
+
+    width = round(width / 32) * 32
+    height = round(height / 32) * 32
+
+    return width, height
 
 def get_prompt():
     instruction = "按照文字指令进行图片编辑"
@@ -37,7 +54,7 @@ def main():
     parser.add_argument("--prompt_with_image", action="store_true", help="load VLM to rephrase prompt but need to be set to True")
     args = parser.parse_args()
 
-    weight_dtype = torch.float16
+    weight_dtype = torch.bfloat16  # TODO: 注意原来是float16
     device = torch.device("cuda:1")
 
     
@@ -69,12 +86,13 @@ def main():
     with torch.inference_mode():
 
         if args.prompt_with_image:
-            for img_name in tqdm(ctrl_dir.rglob("*.png")):
+            ctrl_files = get_image_files(ctrl_dir) if ctrl_dir else []
+            for img_name in tqdm(ctrl_files):
                 img = Image.open(img_name).convert('RGB')
                 calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
                 prompt_image = text_encoding_pipeline.image_processor.resize(img, calculated_height, calculated_width)
 
-                prompt = get_prompt()
+                prompt = get_prompt()  # TODO: 这里的文字指令是写死的。不对
                 prompt_embeds, prompt_embeds_mask = text_encoding_pipeline.encode_prompt(
                     image=prompt_image,
                     prompt=[prompt],
@@ -103,7 +121,8 @@ def main():
 
     # > image encoding
     with torch.inference_mode():
-        for img_name in tqdm(img_dir.rglob("*.png")):
+        img_files = get_image_files(img_dir)  # TODO： 这三个路径也核对一下
+        for img_name in tqdm(img_files):
             img = Image.open(img_name).convert('RGB')
             calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
             img = resizer.resize(img, calculated_height, calculated_width)
@@ -122,7 +141,8 @@ def main():
     # > contorl image encoding
     if ctrl_dir is not None:
         with torch.inference_mode():
-            for img_name in tqdm(ctrl_dir.rglob("*.png")):
+            ctrl_files = get_image_files(ctrl_dir)
+            for img_name in tqdm(ctrl_files):
                 img = Image.open(img_name).convert('RGB')
                 calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
                 img = resizer.resize(img, calculated_height, calculated_width)
