@@ -8,10 +8,10 @@ OUTPUT="result/"
 LORA_RANK=64
 LR=3e-4
 
-EPOCH=1000
-WARM_STEP=300
-MAX_STEP=5000
-CKP=500
+EPOCH=2
+WARM_STEP=3
+MAX_STEP=10
+CKP=1
 
 python scripts/pp_consumer.py \
     --output_dir "$OUTPUT" \
