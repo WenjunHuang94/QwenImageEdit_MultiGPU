@@ -2,7 +2,7 @@ import argparse
 from pathlib import Path
 import torch
 from tqdm.auto import tqdm
-
+import random
 
 from diffusers import AutoencoderKLQwenImage
 from PIL import Image
@@ -31,13 +31,48 @@ def calculate_dimensions(target_area, ratio):
 
     return width, height
 
-def get_prompt():
-    instruction = "按照文字指令进行图片编辑"
+def get_prompt(use_random=True):
     """
-    could be customized by yourself
+    获取 instruction prompt，支持多种变体以增加训练数据的多样性
+    
+    针对任务：根据纯文字图片生成真实实景图片
+    
+    Args:
+        use_random: 是否随机选择 instruction（推荐 True，增加数据多样性）
+    
+    Returns:
+        instruction 字符串
     """
-
-    return instruction
+    # 文字到图像生成任务相关的 instruction 变体（中英文混合）
+    # 强调从文字描述生成真实图像，而非编辑
+    instructions = [
+        # 中文变体 - 强调生成真实图像
+        "根据图片中的文字描述生成真实图像",
+        "按照文字描述生成真实实景图片",
+        "根据文字描述创建真实图像",
+        "按照图片中的文字生成真实场景图片",
+        "根据文字内容生成真实图像",
+        "按照文字描述生成真实的场景图片",
+        "根据图片中的文字生成真实图像",
+        "按照文字指令生成真实实景图片",
+        "根据文字描述生成图像",
+        "按照文字内容创建真实图像",
+        
+        # 英文变体（如果希望模型支持英文）
+        "Generate a realistic image based on the text description in the image",
+        "Create a realistic scene image according to the text in the image",
+        "Generate a real image from the text description",
+        "Generate realistic image based on text instructions",
+        "Create realistic image according to text description",
+        "Generate real scene image from text description",
+    ]
+    
+    if use_random:
+        # 随机选择，增加数据多样性，提高模型泛化能力
+        return random.choice(instructions)
+    else:
+        # 固定使用第一个（用于调试或特定需求）
+        return instructions[0]
 
 
 # > main -----------------------------------------------------------------------------
@@ -52,7 +87,12 @@ def main():
     parser.add_argument("--target_area", type=int, default=512*512, help="Approximate target area (H*W) for 32-aligned resize")
     parser.add_argument("--output_dir", required=True, help="Root output directory; caches will be saved under output-dir/cache/")
     parser.add_argument("--prompt_with_image", action="store_true", help="load VLM to rephrase prompt but need to be set to True")
+    parser.add_argument("--fixed_prompt", action="store_true", help="Use fixed prompt instead of random (default: random for diversity)")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for prompt selection (default: 42 for reproducibility)")
     args = parser.parse_args()
+    
+    # 设置固定的随机种子（默认 42，保证可复现性）
+    random.seed(args.seed)
 
     weight_dtype = torch.bfloat16  # TODO: 注意原来是float16
     device = torch.device("cuda:1")
@@ -92,7 +132,7 @@ def main():
                 calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
                 prompt_image = text_encoding_pipeline.image_processor.resize(img, calculated_height, calculated_width)
 
-                prompt = get_prompt()  # TODO: 这里的文字指令是写死的。不对
+                prompt = get_prompt(use_random=not args.fixed_prompt)
                 prompt_embeds, prompt_embeds_mask = text_encoding_pipeline.encode_prompt(
                     image=prompt_image,
                     prompt=[prompt],

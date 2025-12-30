@@ -1,8 +1,8 @@
 #! /bin/bash
 MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwen-Image-Edit"
-IMG="images2/"
-CTRL="control_images2"
-CACHE="cache/"
+IMG="./extracted_samples/shard_000000/output"
+CTRL="./extracted_samples/shard_000000/input/"
+CACHE="cache2/"
 
 RESOLUTION=$((512*512))
 
