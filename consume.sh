@@ -13,6 +13,15 @@ WARM_STEP=3
 MAX_STEP=10
 CKP=1
 
+# 可选：从检查点恢复训练（取消注释并设置路径）
+# 例如：RESUME_FROM="result/checkpoint-250"
+# 如果未设置或注释掉，则从头开始训练
+RESUME_FROM=""
+
+# 可选：启用保存最佳模型（设置为 true 或 false，或留空）
+# 如果启用，会在每次发现更好的损失时自动保存到 output_dir/best/
+SAVE_BEST=true
+
 python scripts/pp_consumer.py \
     --output_dir "$OUTPUT" \
     --logging_dir "./logger" \
@@ -33,4 +42,6 @@ python scripts/pp_consumer.py \
     --txt_cache_dir "$TXT" \
     --img_cache_dir "$IMG" \
     --control_img_cache_dir "$CTRL" \
+    ${RESUME_FROM:+--resume_from_checkpoint "$RESUME_FROM"} \
+    ${SAVE_BEST:+--save_best_model} \
     "$@"

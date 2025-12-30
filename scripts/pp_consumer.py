@@ -2,22 +2,24 @@ import argparse
 import os
 import wandb
 import json
+import logging
+from pathlib import Path
 
 import torch
 from tqdm.auto import tqdm
-
-from accelerate.logging import get_logger
 from diffusers import FlowMatchEulerDiscreteScheduler
 from diffusers.optimization import get_scheduler
 from diffusers.training_utils import (
     compute_density_for_timestep_sampling,
     compute_loss_weighting_for_sd3,
 )
-from peft import LoraConfig, get_peft_model
+from peft import LoraConfig, get_peft_model, PeftModel
 from diffusers import QwenImageEditPlusPipeline,QwenImageTransformer2DModel
 from QwenEdit import loader, path_done_well, fix_env_for_deepspeed, MultiGPUTransformer
 
-logger = get_logger(__name__, log_level="INFO")
+# 使用标准 Python logging 而不是 accelerate.logging（避免需要初始化 accelerate 状态）
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # > tools -----------------------------------------------------------------------------
 
@@ -58,6 +60,12 @@ def parse_args():
 
     # Checkpointing
     parser.add_argument("--checkpointing_steps", type=int, default=250)
+    parser.add_argument("--resume_from_checkpoint", type=str, default=None, 
+                        help="Path to checkpoint directory to resume training from")
+    parser.add_argument("--save_best_model", action="store_true", 
+                        help="Save best model based on training loss")
+    parser.add_argument("--no_save_optimizer_state", action="store_true",
+                        help="Don't save optimizer/scheduler state in checkpoints (default: save for resuming training)")
 
     # Caches
     parser.add_argument("--txt_cache_dir", type=str, default="/storage/v-jinpewang/az_workspace/rico_model/text_embs/")
@@ -80,6 +88,9 @@ def main():
     args.output_dir, args.logging_dir, args.pretrained_model, args.txt_cache_dir, args.img_cache_dir, args.control_img_cache_dir = path_done_well(
         args.output_dir, args.logging_dir, args.pretrained_model, args.txt_cache_dir, args.img_cache_dir, args.control_img_cache_dir
     )
+    # 处理 resume_from_checkpoint 路径
+    if args.resume_from_checkpoint:
+        args.resume_from_checkpoint = Path(args.resume_from_checkpoint) if not isinstance(args.resume_from_checkpoint, Path) else args.resume_from_checkpoint
 
     use_fp16_amp = (args.weight_dtype == torch.float16)
     scaler = torch.cuda.amp.GradScaler(enabled=use_fp16_amp)
@@ -101,7 +112,7 @@ def main():
     # > LoRA config —— 先插 LoRA 再分片
     lora_config = LoraConfig(
         r=args.rank,
-        lora_alpha=2*args.rank,
+        lora_alpha=2*args.rank,  # TODO: 需要根据实际效果调整
         init_lora_weights='loftq',
         target_modules=[
         "to_k", "to_q", "to_v", "to_out.0", 
@@ -112,7 +123,23 @@ def main():
     # block 级映射为“流水线/模型并行”
     flux_transformer = MultiGPUTransformer(flux_transformer).auto_split()
     first_device = next(flux_transformer.parameters()).device
-    flux_transformer = get_peft_model(flux_transformer, lora_config)
+    
+    # 如果指定了恢复检查点，则加载 LoRA 权重
+    if args.resume_from_checkpoint and args.resume_from_checkpoint.exists():
+        logger.info(f"Loading LoRA weights from checkpoint: {args.resume_from_checkpoint}")
+        # 先创建基础 LoRA 结构
+        flux_transformer = get_peft_model(flux_transformer, lora_config)
+        # 然后加载权重
+        def _unwrap(m):
+            return m._orig_mod if hasattr(m, "_orig_mod") else m
+        unwrapped_flux_transformer = _unwrap(flux_transformer)
+        flux_transformer = PeftModel.from_pretrained(
+            unwrapped_flux_transformer, 
+            str(args.resume_from_checkpoint), 
+            low_cpu_mem_usage=False
+        )
+    else:
+        flux_transformer = get_peft_model(flux_transformer, lora_config)
 
     # Freeze base, train only LoRA
     for n, p in flux_transformer.named_parameters():
@@ -172,6 +199,37 @@ def main():
 
     global_step = 0
     initial_global_step = 0
+    best_loss = float('inf')  # 跟踪最佳损失
+    
+    # 如果从检查点恢复，尝试加载训练状态
+    if args.resume_from_checkpoint and args.resume_from_checkpoint.exists():
+        checkpoint_path = args.resume_from_checkpoint
+        # 尝试加载训练状态文件
+        optimizer_state_path = checkpoint_path / "optimizer.pt"
+        scheduler_state_path = checkpoint_path / "scheduler.pt"
+        scaler_state_path = checkpoint_path / "scaler.pt"
+        training_state_path = checkpoint_path / "training_state.json"
+        
+        if training_state_path.exists():
+            with open(training_state_path, "r") as f:
+                training_state = json.load(f)
+                global_step = training_state.get("global_step", 0)
+                initial_global_step = global_step
+                best_loss = training_state.get("best_loss", float('inf'))
+                logger.info(f"Resuming from step {global_step}, best_loss: {best_loss:.6f}")
+        
+        if optimizer_state_path.exists():
+            logger.info(f"Loading optimizer state from {optimizer_state_path}")
+            optimizer.load_state_dict(torch.load(str(optimizer_state_path), map_location=first_device))
+        
+        if scheduler_state_path.exists():
+            logger.info(f"Loading scheduler state from {scheduler_state_path}")
+            lr_scheduler.load_state_dict(torch.load(str(scheduler_state_path), map_location=first_device))
+        
+        if scaler_state_path.exists() and use_fp16_amp:
+            logger.info(f"Loading scaler state from {scaler_state_path}")
+            scaler.load_state_dict(torch.load(str(scaler_state_path), map_location=first_device))
+    
     progress_bar = tqdm(
         range(0, args.max_train_steps),
         initial=initial_global_step,
@@ -318,9 +376,41 @@ def main():
                 progress_bar.update(1)
                 global_step += 1
 
+                # 检查并更新最佳损失（每次 step 都检查，确保及时保存最佳模型）
+                current_loss = loss.item()
+                if args.save_best_model and current_loss < best_loss:
+                    best_loss = current_loss
+                    best_path = args.output_dir / "best"
+                    try:
+                        best_path.mkdir(exist_ok=True, parents=True)
+                        logger.info(f"New best loss: {best_loss:.6f}, saving to {best_path}")
+                        
+                        # unwrap helper
+                        def _unwrap(m):
+                            return m._orig_mod if hasattr(m, "_orig_mod") else m
+                        unwrapped_flux_transformer = _unwrap(flux_transformer)
+                        
+                        # 保存最佳模型（只保存模型权重，不保存优化器状态，用于推理/部署）
+                        # 将 Path 对象转换为字符串，避免 PEFT 模型卡片序列化错误
+                        unwrapped_flux_transformer.save_pretrained(str(best_path), safe_serialization=True)
+                        
+                        # 只保存训练状态元数据（不保存优化器状态，因为最佳模型主要用于推理）
+                        training_state = {
+                            "global_step": global_step,
+                            "epoch": epoch,
+                            "best_loss": best_loss,
+                            "current_loss": current_loss,
+                        }
+                        with open(best_path / "training_state.json", "w") as f:
+                            json.dump(training_state, f, indent=2)
+                            
+                    except Exception as e:
+                        logger.warning(f"Failed to save best model: {e}")
+
                 wandb.log({
                 "global_step": global_step,
                 "train_loss": loss.item(),
+                "best_loss": best_loss,
                 "lr": lr_scheduler.get_last_lr()[0],
                 "epoch": epoch,
                 })
@@ -328,15 +418,33 @@ def main():
                 if (global_step % args.checkpointing_steps) == 0:
                     save_path = args.output_dir / f"checkpoint-{global_step}"
                     try:
-                        save_path.mkdir(exist_ok=False)
+                        save_path.mkdir(exist_ok=True, parents=True)
                     except Exception as e:
                         print(f"Failed to create checkpoint directory {save_path}: {e}")
+                        continue
 
                     # unwrap is identity in PP-only, but keep a tiny helper for clarity
                     def _unwrap(m):
                         return m._orig_mod if hasattr(m, "_orig_mod") else m
                     unwrapped_flux_transformer = _unwrap(flux_transformer)
-                    unwrapped_flux_transformer.save_pretrained(save_path,safe_serialization=True)
+                    # 将 Path 对象转换为字符串，避免 PEFT 模型卡片序列化错误
+                    unwrapped_flux_transformer.save_pretrained(str(save_path), safe_serialization=True)
+                    
+                    # 保存训练状态（默认保存，用于恢复训练）
+                    if not args.no_save_optimizer_state:
+                        torch.save(optimizer.state_dict(), save_path / "optimizer.pt")
+                        torch.save(lr_scheduler.state_dict(), save_path / "scheduler.pt")
+                        if use_fp16_amp:
+                            torch.save(scaler.state_dict(), save_path / "scaler.pt")
+                    
+                    training_state = {
+                        "global_step": global_step,
+                        "epoch": epoch,
+                        "best_loss": best_loss,
+                        "current_loss": loss.item(),
+                    }
+                    with open(save_path / "training_state.json", "w") as f:
+                        json.dump(training_state, f, indent=2)
 
                 logs = {"step_loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
                 progress_bar.set_postfix(**logs)
