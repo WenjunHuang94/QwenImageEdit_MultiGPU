@@ -103,8 +103,10 @@ def main():
     with open(vae_cfg_path, "r") as f:
         vae = json.load(f)
 
+    # 将 Path 对象转换为字符串，避免 PEFT 模型卡片序列化错误
+    pretrained_model_str = str(args.pretrained_model)
     flux_transformer = QwenImageTransformer2DModel.from_pretrained(
-        args.pretrained_model,
+        pretrained_model_str,
         subfolder="transformer",
         torch_dtype=args.weight_dtype,
     )
@@ -182,7 +184,7 @@ def main():
 
     # > noise scheduler
     noise_scheduler = FlowMatchEulerDiscreteScheduler.from_pretrained(
-        args.pretrained_model,
+        pretrained_model_str,
         subfolder="scheduler",
     )
 
@@ -390,6 +392,25 @@ def main():
                             return m._orig_mod if hasattr(m, "_orig_mod") else m
                         unwrapped_flux_transformer = _unwrap(flux_transformer)
                         
+                        # 确保 base_model 是字符串，避免 YAML 序列化 Path 对象错误
+                        if hasattr(unwrapped_flux_transformer, 'base_model') and hasattr(unwrapped_flux_transformer.base_model, 'config'):
+                            if hasattr(unwrapped_flux_transformer.base_model.config, '_name_or_path'):
+                                unwrapped_flux_transformer.base_model.config._name_or_path = str(unwrapped_flux_transformer.base_model.config._name_or_path)
+                        if hasattr(unwrapped_flux_transformer, 'peft_config'):
+                            for key in unwrapped_flux_transformer.peft_config:
+                                if hasattr(unwrapped_flux_transformer.peft_config[key], 'base_model_name_or_path'):
+                                    path_val = unwrapped_flux_transformer.peft_config[key].base_model_name_or_path
+                                    if isinstance(path_val, Path):
+                                        unwrapped_flux_transformer.peft_config[key].base_model_name_or_path = str(path_val)
+                        
+                        # 删除可能损坏的模型卡片文件，让 PEFT 重新创建
+                        model_card_path = best_path / "README.md"
+                        if model_card_path.exists():
+                            try:
+                                model_card_path.unlink()
+                            except Exception as e:
+                                logger.warning(f"Failed to remove existing model card: {e}")
+                        
                         # 保存最佳模型（只保存模型权重，不保存优化器状态，用于推理/部署）
                         # 将 Path 对象转换为字符串，避免 PEFT 模型卡片序列化错误
                         unwrapped_flux_transformer.save_pretrained(str(best_path), safe_serialization=True)
@@ -427,6 +448,26 @@ def main():
                     def _unwrap(m):
                         return m._orig_mod if hasattr(m, "_orig_mod") else m
                     unwrapped_flux_transformer = _unwrap(flux_transformer)
+                    
+                    # 确保 base_model 是字符串，避免 YAML 序列化 Path 对象错误
+                    if hasattr(unwrapped_flux_transformer, 'base_model') and hasattr(unwrapped_flux_transformer.base_model, 'config'):
+                        if hasattr(unwrapped_flux_transformer.base_model.config, '_name_or_path'):
+                            unwrapped_flux_transformer.base_model.config._name_or_path = str(unwrapped_flux_transformer.base_model.config._name_or_path)
+                    if hasattr(unwrapped_flux_transformer, 'peft_config'):
+                        for key in unwrapped_flux_transformer.peft_config:
+                            if hasattr(unwrapped_flux_transformer.peft_config[key], 'base_model_name_or_path'):
+                                path_val = unwrapped_flux_transformer.peft_config[key].base_model_name_or_path
+                                if isinstance(path_val, Path):
+                                    unwrapped_flux_transformer.peft_config[key].base_model_name_or_path = str(path_val)
+                    
+                    # 删除可能损坏的模型卡片文件，让 PEFT 重新创建
+                    model_card_path = save_path / "README.md"
+                    if model_card_path.exists():
+                        try:
+                            model_card_path.unlink()
+                        except Exception as e:
+                            logger.warning(f"Failed to remove existing model card: {e}")
+                    
                     # 将 Path 对象转换为字符串，避免 PEFT 模型卡片序列化错误
                     unwrapped_flux_transformer.save_pretrained(str(save_path), safe_serialization=True)
                     
