@@ -21,16 +21,6 @@ def get_image_files(directory):
     jpg_files = list(directory.rglob("*.jpg"))
     return png_files + jpg_files
 
-# calculate dimension for easy divised by 32
-def calculate_dimensions(target_area, ratio):
-    width = math.sqrt(target_area * ratio)
-    height = width / ratio
-
-    width = round(width / 32) * 32
-    height = round(height / 32) * 32
-
-    return width, height
-
 def get_prompt(use_random=True):
     """
     获取 instruction prompt，支持多种变体以增加训练数据的多样性
@@ -89,6 +79,7 @@ def main():
     parser.add_argument("--prompt_with_image", action="store_true", help="load VLM to rephrase prompt but need to be set to True")
     parser.add_argument("--fixed_prompt", action="store_true", help="Use fixed prompt instead of random (default: random for diversity)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for prompt selection (default: 42 for reproducibility)")
+    parser.add_argument("--max_samples", type=int, default=None, help="Maximum number of samples to process (for quick testing, e.g., 500 or 1000)")
     args = parser.parse_args()
     
     # 设置固定的随机种子（默认 42，保证可复现性）
@@ -112,6 +103,24 @@ def main():
     txt_cache_dir.mkdir(exist_ok=True)
     img_cache_dir.mkdir(exist_ok=True)
     ctrl_cache_dir.mkdir(exist_ok=True)
+    
+    # 预先获取并排序文件列表，确保一致性（特别是当使用max_samples时）
+    if ctrl_dir is not None:
+        all_ctrl_files = sorted(get_image_files(ctrl_dir))
+        all_img_files = sorted(get_image_files(img_dir))
+        # 如果设置了最大样本数，只处理前N个（用于快速测试）
+        if args.max_samples is not None:
+            if len(all_ctrl_files) > args.max_samples:
+                print(f"限制处理数量：从 {len(all_ctrl_files)} 个样本中选择前 {args.max_samples} 个")
+                all_ctrl_files = all_ctrl_files[:args.max_samples]
+            if len(all_img_files) > args.max_samples:
+                all_img_files = all_img_files[:args.max_samples]
+    else:
+        all_ctrl_files = []
+        all_img_files = sorted(get_image_files(img_dir))
+        if args.max_samples is not None and len(all_img_files) > args.max_samples:
+            print(f"限制处理数量：从 {len(all_img_files)} 个样本中选择前 {args.max_samples} 个")
+            all_img_files = all_img_files[:args.max_samples]
 
     # > pre-process -----------------------------------------------------------------------------
     
@@ -126,8 +135,7 @@ def main():
     with torch.inference_mode():
 
         if args.prompt_with_image:
-            ctrl_files = get_image_files(ctrl_dir) if ctrl_dir else []
-            for img_name in tqdm(ctrl_files):
+            for img_name in tqdm(all_ctrl_files):
                 img = Image.open(img_name).convert('RGB')
                 calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
                 prompt_image = text_encoding_pipeline.image_processor.resize(img, calculated_height, calculated_width)
@@ -161,8 +169,7 @@ def main():
 
     # > image encoding
     with torch.inference_mode():
-        img_files = get_image_files(img_dir)  # TODO： 这三个路径也核对一下
-        for img_name in tqdm(img_files):
+        for img_name in tqdm(all_img_files):
             img = Image.open(img_name).convert('RGB')
             calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
             img = resizer.resize(img, calculated_height, calculated_width)
@@ -181,8 +188,7 @@ def main():
     # > contorl image encoding
     if ctrl_dir is not None:
         with torch.inference_mode():
-            ctrl_files = get_image_files(ctrl_dir)
-            for img_name in tqdm(ctrl_files):
+            for img_name in tqdm(all_ctrl_files):
                 img = Image.open(img_name).convert('RGB')
                 calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
                 img = resizer.resize(img, calculated_height, calculated_width)
