@@ -1,17 +1,22 @@
 #! /bin/bash
 MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwen-Image-Edit"
-TXT="cache/text_embs/"
-IMG="cache/img_embs/"
-CTRL="cache/img_embs_control/"
-OUTPUT="result/"
+TXT="cache2/text_embs/"
+IMG="cache2/img_embs/"
+CTRL="cache2/img_embs_control/"
+OUTPUT="result4/"
 
 LORA_RANK=64
 LR=3e-4
 
+# 训练参数建议（针对10000个样本，batch_size=1）：
+# - EPOCH: 1-2个epoch通常足够，LoRA训练收敛快
+# - MAX_STEP: 10000-20000步（1-2个epoch）
+# - WARM_STEP: 总步数的5-10%，用于学习率预热
+# - CKP: 每500-1000步保存一次检查点
 EPOCH=2
-WARM_STEP=3
-MAX_STEP=10
-CKP=1
+WARM_STEP=500
+MAX_STEP=20000
+CKP=500
 
 # 可选：从检查点恢复训练（取消注释并设置路径）
 # 例如：RESUME_FROM="result/checkpoint-250"
