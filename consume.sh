@@ -1,9 +1,9 @@
 #! /bin/bash
 MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwen-Image-Edit"
-TXT="cache2/text_embs/"
-IMG="cache2/img_embs/"
-CTRL="cache2/img_embs_control/"
-OUTPUT="result4/"
+TXT="cache5/text_embs/"
+IMG="cache5/img_embs/"
+CTRL="cache5/img_embs_control/"
+OUTPUT="result5/"
 
 LORA_RANK=64
 LR=3e-4
@@ -13,15 +13,15 @@ LR=3e-4
 # - MAX_STEP: 10000-20000步（1-2个epoch）
 # - WARM_STEP: 总步数的5-10%，用于学习率预热
 # - CKP: 每500-1000步保存一次检查点
-EPOCH=2
-WARM_STEP=500
-MAX_STEP=20000
-CKP=500
+EPOCH=3
+WARM_STEP=200
+MAX_STEP=6000
+CKP=300
 
 # 可选：从检查点恢复训练（取消注释并设置路径）
 # 例如：RESUME_FROM="result/checkpoint-250"
 # 如果未设置或注释掉，则从头开始训练
-RESUME_FROM=""
+RESUME_FROM="./result4/checkpoint-3000"
 
 # 可选：启用保存最佳模型（设置为 true 或 false，或留空）
 # 如果启用，会在每次发现更好的损失时自动保存到 output_dir/best/

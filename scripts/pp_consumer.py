@@ -152,17 +152,24 @@ def main():
     # 统计可训练参数
     trainable_params = [p for p in flux_transformer.parameters() if p.requires_grad]
     print(sum(p.numel() for p in trainable_params) / 1e6, 'parameters (trainable)')
-
-    # 启用大块的梯度检查点，降低显存
-    flux_transformer.enable_gradient_checkpointing()
-
+    
+    # 在流水线并行中，优化器要求所有参数在同一设备上
+    # 解决方案：禁用 foreach 优化，使用传统的逐个参数更新方式
+    # 这样可以避免 PyTorch 尝试按设备分组参数时出错
+    # 注意：foreach=False 会稍微降低优化器性能，但在多设备场景下是必需的
     optimizer = torch.optim.AdamW(
         trainable_params,
         lr=args.learning_rate,
         betas=(args.adam_beta1, args.adam_beta2),
         weight_decay=args.adam_weight_decay,
         eps=args.adam_epsilon,
+        foreach=False,  # 禁用 foreach 优化，避免多设备参数分组错误
+        fused=False,    # 禁用 fused 优化，确保兼容性
+        capturable=True  # 增加对跨设备或图捕获的兼容性
     )
+
+    # 启用大块的梯度检查点，降低显存
+    flux_transformer.enable_gradient_checkpointing()
 
     # 已编码 img_latents / control_latents、prompt_embeds、prompt_mask（预编码管线）
     train_dataloader = loader(
@@ -223,10 +230,22 @@ def main():
                 ema_loss = training_state.get("ema_loss", None)  # 恢复 EMA 损失
                 ema_loss_str = f"{ema_loss:.6f}" if ema_loss is not None else "None"
                 logger.info(f"Resuming from step {global_step}, best_loss: {best_loss:.6f}, ema_loss: {ema_loss_str}")
-        
+
         if optimizer_state_path.exists():
             logger.info(f"Loading optimizer state from {optimizer_state_path}")
-            optimizer.load_state_dict(torch.load(str(optimizer_state_path), map_location=first_device))
+            state_dict = torch.load(str(optimizer_state_path), map_location='cpu')  # 先加载到 CPU
+            optimizer.load_state_dict(state_dict)
+
+            # --- 关键修复代码：手动将优化器状态移动到参数所在的正确设备 ---
+            for group in optimizer.param_groups:
+                for p in group['params']:
+                    if p in optimizer.state:
+                        state = optimizer.state[p]
+                        # 遍历该参数的所有状态（如 exp_avg, exp_avg_sq）
+                        for k, v in state.items():
+                            if isinstance(v, torch.Tensor):
+                                state[k] = v.to(device=p.device, dtype=v.dtype)
+            logger.info("Optimizer state device alignment completed.")
         
         if scheduler_state_path.exists():
             logger.info(f"Loading scheduler state from {scheduler_state_path}")
