@@ -25,7 +25,7 @@ def get_prompt(use_random=True):
     """
     获取 instruction prompt，支持多种变体以增加训练数据的多样性
     
-    针对任务：根据纯文字图片生成真实实景图片
+    针对任务：根据原始图片和文字指令编辑图像（在现有图片上添加/修改内容）
     
     Args:
         use_random: 是否随机选择 instruction（推荐 True，增加数据多样性）
@@ -33,28 +33,35 @@ def get_prompt(use_random=True):
     Returns:
         instruction 字符串
     """
-    # 文字到图像生成任务相关的 instruction 变体（中英文混合）
-    # 强调从文字描述生成真实图像，而非编辑
+    # 图像编辑任务相关的 instruction 变体（中英文混合）
+    # 强调根据文字指令编辑/修改现有图像，而非从零生成
     instructions = [
-        # 中文变体 - 强调生成真实图像
-        "根据图片中的文字描述生成真实图像",
-        "按照文字描述生成真实实景图片",
-        "根据文字描述创建真实图像",
-        "按照图片中的文字生成真实场景图片",
-        "根据文字内容生成真实图像",
-        "按照文字描述生成真实的场景图片",
-        "根据图片中的文字生成真实图像",
-        "按照文字指令生成真实实景图片",
-        "根据文字描述生成图像",
-        "按照文字内容创建真实图像",
+        # 中文变体 - 强调编辑图像
+        "根据图片中的文字指令编辑图像",
+        "按照文字描述修改图片",
+        "根据文字提示在图片上添加内容",
+        "按照图片中的文字指令编辑图像",
+        "根据文字描述编辑图片",
+        "按照文字提示修改图像",
+        "根据图片中的文字编辑图像",
+        "按照文字指令在图片上添加内容",
+        "根据文字描述在图片上进行编辑",
+        "按照文字提示编辑图片",
+        "根据图片中的文字指令修改图像",
+        "按照文字描述在图片上添加元素",
+        "根据文字提示编辑图像",
+        "按照图片中的文字修改图像",
+        "根据文字指令编辑图片",
         
         # 英文变体（如果希望模型支持英文）
-        "Generate a realistic image based on the text description in the image",
-        "Create a realistic scene image according to the text in the image",
-        "Generate a real image from the text description",
-        "Generate realistic image based on text instructions",
-        "Create realistic image according to text description",
-        "Generate real scene image from text description",
+        "Edit the image according to the text instruction in the image",
+        "Modify the image based on the text description in the image",
+        "Edit the image according to the text prompt",
+        "Modify the image based on the text instruction",
+        "Edit the image following the text description",
+        "Apply the text instruction to edit the image",
+        "Edit the image according to the text in the image",
+        "Modify the image based on the text prompt in the image",
     ]
     
     if use_random:
