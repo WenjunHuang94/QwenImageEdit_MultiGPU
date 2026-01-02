@@ -86,7 +86,7 @@ def main():
     parser.add_argument("--prompt_with_image", action="store_true", help="load VLM to rephrase prompt but need to be set to True")
     parser.add_argument("--fixed_prompt", action="store_true", help="Use fixed prompt instead of random (default: random for diversity)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for prompt selection (default: 42 for reproducibility)")
-    parser.add_argument("--max_samples", type=int, default=None, help="Maximum number of samples to process (for quick testing, e.g., 500 or 1000)")
+    parser.add_argument("--max_samples", type=int, default=2000, help="Maximum number of samples to process (for quick testing, e.g., 500 or 1000)")
     args = parser.parse_args()
     
     # 设置固定的随机种子（默认 42，保证可复现性）
