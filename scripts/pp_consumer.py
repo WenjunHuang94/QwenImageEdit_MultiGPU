@@ -202,6 +202,8 @@ def main():
     global_step = 0
     initial_global_step = 0
     best_loss = float('inf')  # 跟踪最佳损失
+    ema_loss = None  # EMA 平滑损失
+    ema_decay = 0.99  # EMA 衰减系数（0.99 表示保留 99% 的历史信息）
     
     # 如果从检查点恢复，尝试加载训练状态
     if args.resume_from_checkpoint and args.resume_from_checkpoint.exists():
@@ -218,7 +220,8 @@ def main():
                 global_step = training_state.get("global_step", 0)
                 initial_global_step = global_step
                 best_loss = training_state.get("best_loss", float('inf'))
-                logger.info(f"Resuming from step {global_step}, best_loss: {best_loss:.6f}")
+                ema_loss = training_state.get("ema_loss", None)  # 恢复 EMA 损失
+                logger.info(f"Resuming from step {global_step}, best_loss: {best_loss:.6f}, ema_loss: {ema_loss:.6f if ema_loss else 'None'}")
         
         if optimizer_state_path.exists():
             logger.info(f"Loading optimizer state from {optimizer_state_path}")
@@ -378,8 +381,14 @@ def main():
                 progress_bar.update(1)
                 global_step += 1
 
-                # 检查并更新最佳损失（每次 step 都检查，确保及时保存最佳模型）
+                # 更新 EMA 平滑损失
                 current_loss = loss.item()
+                if ema_loss is None:
+                    ema_loss = current_loss
+                else:
+                    ema_loss = ema_decay * ema_loss + (1 - ema_decay) * current_loss
+                
+                # 检查并更新最佳损失（每次 step 都检查，确保及时保存最佳模型）
                 if args.save_best_model and current_loss < best_loss:
                     best_loss = current_loss
                     best_path = args.output_dir / "best"
@@ -421,6 +430,7 @@ def main():
                             "epoch": epoch,
                             "best_loss": best_loss,
                             "current_loss": current_loss,
+                            "ema_loss": ema_loss,  # 保存 EMA 损失
                         }
                         with open(best_path / "training_state.json", "w") as f:
                             json.dump(training_state, f, indent=2)
@@ -430,7 +440,8 @@ def main():
 
                 wandb.log({
                 "global_step": global_step,
-                "train_loss": loss.item(),
+                "train_loss": loss.item(),  # 瞬时损失（可能有噪声）
+                "train_loss_ema": ema_loss,  # EMA 平滑损失（推荐观察这个）
                 "best_loss": best_loss,
                 "lr": lr_scheduler.get_last_lr()[0],
                 "epoch": epoch,
@@ -483,6 +494,7 @@ def main():
                         "epoch": epoch,
                         "best_loss": best_loss,
                         "current_loss": loss.item(),
+                        "ema_loss": ema_loss,  # 保存 EMA 损失
                     }
                     with open(save_path / "training_state.json", "w") as f:
                         json.dump(training_state, f, indent=2)
