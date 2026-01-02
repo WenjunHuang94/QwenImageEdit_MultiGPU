@@ -115,7 +115,7 @@ def main():
     lora_config = LoraConfig(
         r=args.rank,
         lora_alpha=2*args.rank,  # TODO: 需要根据实际效果调整
-        init_lora_weights='loftq',
+        init_lora_weights='gaussian',  # TODO:原来是 loftq
         target_modules=[
         "to_k", "to_q", "to_v", "to_out.0", 
         "add_q_proj", "add_k_proj", "add_v_proj", "to_add_out",],
@@ -221,7 +221,8 @@ def main():
                 initial_global_step = global_step
                 best_loss = training_state.get("best_loss", float('inf'))
                 ema_loss = training_state.get("ema_loss", None)  # 恢复 EMA 损失
-                logger.info(f"Resuming from step {global_step}, best_loss: {best_loss:.6f}, ema_loss: {ema_loss:.6f if ema_loss else 'None'}")
+                ema_loss_str = f"{ema_loss:.6f}" if ema_loss is not None else "None"
+                logger.info(f"Resuming from step {global_step}, best_loss: {best_loss:.6f}, ema_loss: {ema_loss_str}")
         
         if optimizer_state_path.exists():
             logger.info(f"Loading optimizer state from {optimizer_state_path}")
