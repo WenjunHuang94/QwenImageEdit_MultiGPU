@@ -126,27 +126,24 @@ def main():
         "add_q_proj", "add_k_proj", "add_v_proj", "to_add_out",],
     )
 
+    # 确保基础模型在 CPU 上
+    flux_transformer.to("cpu")
 
-    # block 级映射为“流水线/模型并行”
-    flux_transformer = MultiGPUTransformer(flux_transformer).auto_split()
-    first_device = next(flux_transformer.parameters()).device
-    
-    # 如果指定了恢复检查点，则加载 LoRA 权重
     if args.resume_from_checkpoint and args.resume_from_checkpoint.exists():
-        logger.info(f"Loading LoRA weights from checkpoint: {args.resume_from_checkpoint}")
-        # 先创建基础 LoRA 结构
-        flux_transformer = get_peft_model(flux_transformer, lora_config)
-        # 然后加载权重
-        def _unwrap(m):
-            return m._orig_mod if hasattr(m, "_orig_mod") else m
-        unwrapped_flux_transformer = _unwrap(flux_transformer)
+        logger.info("Loading LoRA weights on CPU...")
+        # 显式指定 device_map="cpu" 或不指定（默认为 CPU）
         flux_transformer = PeftModel.from_pretrained(
-            unwrapped_flux_transformer, 
-            str(args.resume_from_checkpoint), 
-            low_cpu_mem_usage=False
+            flux_transformer,
+            str(args.resume_from_checkpoint),
+            is_trainable=True
         )
     else:
         flux_transformer = get_peft_model(flux_transformer, lora_config)
+
+    # 确保此时模型依然在 CPU，然后进行分片
+    # auto_split 会负责把 CPU 上的各部分均匀搬运到各张 GPU 上
+    flux_transformer = MultiGPUTransformer(flux_transformer).auto_split()
+    first_device = next(flux_transformer.parameters()).device
 
     # Freeze base, train only LoRA
     for n, p in flux_transformer.named_parameters():

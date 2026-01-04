@@ -1,9 +1,9 @@
 #! /bin/bash
 MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwen-Image-Edit"
-TXT="cache5/text_embs/"
-IMG="cache5/img_embs/"
-CTRL="cache5/img_embs_control/"
-OUTPUT="result5/"
+TXT="cache2/text_embs/"
+IMG="cache2/img_embs/"
+CTRL="cache2/img_embs_control/"
+OUTPUT="result10/"
 
 LORA_RANK=64
 LR=3e-4
