@@ -66,6 +66,9 @@ def parse_args():
                         help="Save best model based on training loss")
     parser.add_argument("--no_save_optimizer_state", action="store_true",
                         help="Don't save optimizer/scheduler state in checkpoints (default: save for resuming training)")
+    parser.add_argument("--load_optimizer_state", action="store_true",
+                        help="Load optimizer/scheduler state when resuming (default: NOT load, start from scratch). "
+                             "Use this flag if you want to continue training on the same dataset with previous optimizer momentum")
 
     # Caches
     parser.add_argument("--txt_cache_dir", type=str, default="/storage/v-jinpewang/az_workspace/rico_model/text_embs/")
@@ -163,9 +166,9 @@ def main():
         betas=(args.adam_beta1, args.adam_beta2),
         weight_decay=args.adam_weight_decay,
         eps=args.adam_epsilon,
-        foreach=False,  # 禁用 foreach 优化，避免多设备参数分组错误
-        fused=False,    # 禁用 fused 优化，确保兼容性
-        capturable=True  # 增加对跨设备或图捕获的兼容性
+        #foreach=False,  # 禁用 foreach 优化，避免多设备参数分组错误  #TODO: 这里首次训练时得关闭掉，否则损失会是nan
+        #fused=False,    # 禁用 fused 优化，确保兼容性
+        #capturable=True  # 增加对跨设备或图捕获的兼容性
     )
 
     # 启用大块的梯度检查点，降低显存
@@ -221,7 +224,7 @@ def main():
         scaler_state_path = checkpoint_path / "scaler.pt"
         training_state_path = checkpoint_path / "training_state.json"
         
-        if training_state_path.exists():
+        if training_state_path.exists() and args.load_optimizer_state:
             with open(training_state_path, "r") as f:
                 training_state = json.load(f)
                 global_step = training_state.get("global_step", 0)
@@ -230,8 +233,11 @@ def main():
                 ema_loss = training_state.get("ema_loss", None)  # 恢复 EMA 损失
                 ema_loss_str = f"{ema_loss:.6f}" if ema_loss is not None else "None"
                 logger.info(f"Resuming from step {global_step}, best_loss: {best_loss:.6f}, ema_loss: {ema_loss_str}")
+        elif training_state_path.exists() and not args.load_optimizer_state:
+            logger.info(f"Training state found but skipping load (default behavior). "
+                       f"Training will restart from step 0 with fresh statistics. Use --load_optimizer_state to load previous state.")
 
-        if optimizer_state_path.exists():
+        if optimizer_state_path.exists() and args.load_optimizer_state:
             logger.info(f"Loading optimizer state from {optimizer_state_path}")
             state_dict = torch.load(str(optimizer_state_path), map_location='cpu')  # 先加载到 CPU
             optimizer.load_state_dict(state_dict)
@@ -246,14 +252,23 @@ def main():
                             if isinstance(v, torch.Tensor):
                                 state[k] = v.to(device=p.device, dtype=v.dtype)
             logger.info("Optimizer state device alignment completed.")
+        elif optimizer_state_path.exists() and not args.load_optimizer_state:
+            logger.info(f"Optimizer state found but skipping load (default behavior). "
+                       f"Optimizer will be initialized from scratch. Use --load_optimizer_state to load previous state.")
         
-        if scheduler_state_path.exists():
+        if scheduler_state_path.exists() and args.load_optimizer_state:
             logger.info(f"Loading scheduler state from {scheduler_state_path}")
             lr_scheduler.load_state_dict(torch.load(str(scheduler_state_path), map_location=first_device))
+        elif scheduler_state_path.exists() and not args.load_optimizer_state:
+            logger.info(f"Scheduler state found but skipping load (default behavior). "
+                       f"Scheduler will restart from beginning. Use --load_optimizer_state to load previous state.")
         
-        if scaler_state_path.exists() and use_fp16_amp:
+        if scaler_state_path.exists() and use_fp16_amp and args.load_optimizer_state:
             logger.info(f"Loading scaler state from {scaler_state_path}")
             scaler.load_state_dict(torch.load(str(scaler_state_path), map_location=first_device))
+        elif scaler_state_path.exists() and use_fp16_amp and not args.load_optimizer_state:
+            logger.info(f"Scaler state found but skipping load (default behavior). "
+                       f"Scaler will restart from beginning. Use --load_optimizer_state to load previous state.")
     
     progress_bar = tqdm(
         range(0, args.max_train_steps),
