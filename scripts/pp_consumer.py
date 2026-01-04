@@ -87,7 +87,9 @@ def main():
     # > config
     args = parse_args()
     # dtype 自适配：支持 bf16 则优先，否则用 fp16（V100 无 bf16）
-    args.weight_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    #args.weight_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    args.weight_dtype = torch.bfloat16  # TODO：改为用bf16
+
     args.output_dir, args.logging_dir, args.pretrained_model, args.txt_cache_dir, args.img_cache_dir, args.control_img_cache_dir = path_done_well(
         args.output_dir, args.logging_dir, args.pretrained_model, args.txt_cache_dir, args.img_cache_dir, args.control_img_cache_dir
     )
