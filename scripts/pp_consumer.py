@@ -1,6 +1,7 @@
 import argparse
 import os
 import wandb
+import datetime
 import json
 import logging
 from pathlib import Path
@@ -87,7 +88,9 @@ def main():
     # > config
     args = parse_args()
     # dtype 自适配：支持 bf16 则优先，否则用 fp16（V100 无 bf16）
-    args.weight_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    #args.weight_dtype = torch.bfloat16 if torch.cuda.is_bf16_supported() else torch.float16
+    args.weight_dtype = torch.bfloat16  # TODO：改为用bf16
+
     args.output_dir, args.logging_dir, args.pretrained_model, args.txt_cache_dir, args.img_cache_dir, args.control_img_cache_dir = path_done_well(
         args.output_dir, args.logging_dir, args.pretrained_model, args.txt_cache_dir, args.img_cache_dir, args.control_img_cache_dir
     )
@@ -124,25 +127,33 @@ def main():
         "add_q_proj", "add_k_proj", "add_v_proj", "to_add_out",],
     )
 
-
-    # block 级映射为“流水线/模型并行”
+    # 1. 先分片（此时显存压力最小，分布最均匀）
     flux_transformer = MultiGPUTransformer(flux_transformer).auto_split()
     first_device = next(flux_transformer.parameters()).device
-    
-    # 如果指定了恢复检查点，则加载 LoRA 权重
+
+    # 2. 创建基础 LoRA 结构
+    # 这一步会在已经分布在不同卡的 Block 上各自加上 LoRA 层
+    flux_transformer = get_peft_model(flux_transformer, lora_config)
+
+    # 3. 解决 RESUME_FROM 失效的关键代码
     if args.resume_from_checkpoint and args.resume_from_checkpoint.exists():
-        logger.info(f"Loading LoRA weights from checkpoint: {args.resume_from_checkpoint}")
-        # 先创建基础 LoRA 结构
-        flux_transformer = get_peft_model(flux_transformer, lora_config)
-        # 然后加载权重
-        def _unwrap(m):
-            return m._orig_mod if hasattr(m, "_orig_mod") else m
-        unwrapped_flux_transformer = _unwrap(flux_transformer)
-        flux_transformer = PeftModel.from_pretrained(
-            unwrapped_flux_transformer, 
-            str(args.resume_from_checkpoint), 
-            low_cpu_mem_usage=False
-        )
+        logger.info(f"🚀 正在从分片模型中恢复权重: {args.resume_from_checkpoint}")
+
+        # 加载 checkpoint 里的 adapter_model.bin (或 .safetensors)
+        checkpoint_file = args.resume_from_checkpoint / "adapter_model.safetensors"
+
+        from safetensors.torch import load_file
+        if checkpoint_file.suffix == ".safetensors":
+            state_dict = load_file(str(checkpoint_file))
+        else:
+            state_dict = torch.load(str(checkpoint_file), map_location="cpu")
+
+        # 核心技巧：PEFT 会给参数加上 'base_model.model.' 前缀
+        # 我们需要确保 state_dict 的键值和当前 flux_transformer 的键值对应
+        # 即使模型分片了，只要层级名称没变，set_peft_model_state_dict 就能搞定
+        from peft import set_peft_model_state_dict
+        set_peft_model_state_dict(flux_transformer, state_dict)
+        logger.info("✅ 权重已成功映射并加载到多卡分片模型中")
     else:
         flux_transformer = get_peft_model(flux_transformer, lora_config)
 
@@ -276,17 +287,23 @@ def main():
         desc="Steps",
     )
     # > wandb init -----------------------------------------------------------------
+    # 获取当前时间，格式为：0104-1630 (月日-时分)
+    current_time = datetime.datetime.now().strftime("%m%d-%H%M")
+
+    # 构造唯一的实验名
+    suffix = "resume" if args.resume_from_checkpoint else "start"
+    run_name = f"ppRun-rank{args.rank}-{suffix}-{current_time}"
+
+    # > wandb init
     wandb.init(
-        project="qwen_lora",      # 自定义项目名
-        name=f"ppRun-rank{args.rank}",  # 可选：给这次实验命名
+        project="qwen_lora",
+        name=run_name,  # 使用带时间的唯一名字
         config={
             "learning_rate": args.learning_rate,
             "epochs": args.epochs,
             "batch_size": args.train_batch_size,
-            "grad_accum_steps": args.gradient_accumulation_steps,
-            "dtype": str(args.weight_dtype),
             "rank": args.rank,
-            "num_gpus": torch.cuda.device_count(),
+            "resume_from": str(args.resume_from_checkpoint) if args.resume_from_checkpoint else "None",
         }
     )
 
