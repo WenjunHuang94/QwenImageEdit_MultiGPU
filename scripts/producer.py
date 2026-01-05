@@ -62,6 +62,28 @@ def get_prompt(use_random=True, prompt_type="edit"):
             "Draw a realistic picture according to the text description",
             "Create a picture from the text description in the image",
         ]
+    elif prompt_type == "annotated_edit":
+        # 针对带框/标注的图像编辑指令
+        instructions = [
+            # 中文变体 - 强调标注位置和内容
+            "根据图片中的框标注和文字指令修改图像",
+            "在图片中标注的指定位置添加文字描述的内容",
+            "参考图中的颜色框标注，在对应位置生成目标物体",
+            "按照标注框旁边的文字提示，修改图片中的指定区域",
+            "根据标注指示，在图片对应位置进行绘画",
+            "按照图中的框选区域和文字描述编辑图像",
+            "根据图片中的标注框位置，绘画出文字描述的实景内容",
+            "在图中框出的位置，按照文字指令进行修改",
+            "结合图中的位置标注和文字提示，生成真实的场景",
+
+            # 英文变体
+            "Modify the image at the annotated location according to the text instruction",
+            "Edit the specified area in the image based on the colored box and text prompt",
+            "Add the object described by the text at the position indicated by the box",
+            "Based on the annotations in the image, edit the specific region following the text",
+            "Generate the content in the boxed area as described by the text prompt",
+            "Follow the visual markers and text instructions to modify the image",
+        ]
     else:
         # 图像编辑任务相关的 instruction 变体（中英文混合）
         # 强调根据文字指令编辑/修改现有图像，而非从零生成
@@ -115,10 +137,10 @@ def main():
     parser.add_argument("--output_dir", required=True, help="Root output directory; caches will be saved under output-dir/cache/")
     parser.add_argument("--prompt_with_image", action="store_true", help="load VLM to rephrase prompt but need to be set to True")
     parser.add_argument("--fixed_prompt", action="store_true", help="Use fixed prompt instead of random (default: random for diversity)")
-    parser.add_argument("--prompt_type", type=str, default="edit", choices=["edit", "generate"],
+    parser.add_argument("--prompt_type", type=str, default="edit", choices=["edit", "generate", "annotated_edit"],
                        help="Prompt type: 'edit' for image editing, 'generate' for text-to-image generation (default: edit)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for prompt selection (default: 42 for reproducibility)")
-    parser.add_argument("--max_samples", type=int, default=2000, help="Maximum number of samples to process (for quick testing, e.g., 500 or 1000)")
+    parser.add_argument("--max_samples", type=int, default=4000, help="Maximum number of samples to process (for quick testing, e.g., 500 or 1000)")
     args = parser.parse_args()
     
     # 设置固定的随机种子（默认 42，保证可复现性）
