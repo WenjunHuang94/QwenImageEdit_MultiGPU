@@ -105,6 +105,29 @@ def get_prompt(use_random=True, prompt_type="edit"):
             "Translate the visual sketches into realistic textures and shapes",
             "Use the provided doodles as a guide to paint realistic objects on the image"
         ]
+    elif prompt_type == "pointer_edit":
+        instructions = [
+            # 类别 1：原始通用 Edit 指令（完全不提箭头，迫使模型自动关联视觉信号）
+            "根据图片中的文字指令编辑图像",
+            "按照文字描述修改图片内容",
+            "根据文字提示在图片上进行编辑",
+            "Edit the image following the text description",
+            "Modify the image based on the text prompt",
+
+            # 类别 2：显式空间引导指令（强力建立坐标感）
+            "请识别图中的箭头指向，按照旁边的文字要求修改对应区域",
+            "根据指示箭头和文字操作描述，对图片进行实景化修改",
+            "根据图中箭头标记的位置，执行文字描述的编辑任务",
+            "Follow the visual pointer and text to edit the image",
+            "Execute the instruction written next to the arrow",
+
+            # 类别 3：中性标注引导指令（平衡态）
+            "根据图片里的标注信息，把对应的物体换成文字描述的样子",
+            "参考图中的提示文字和指向，完成图像编辑",
+            "按照图片中的手写文字指令，对指定物体进行修改",
+            "Look at the handwritten instructions in the image to perform the edit",
+            "Based on the annotations, update the pointed part of the image"
+        ]
     else:
         # 图像编辑任务相关的 instruction 变体（中英文混合）
         # 强调根据文字指令编辑/修改现有图像，而非从零生成
@@ -158,7 +181,7 @@ def main():
     parser.add_argument("--output_dir", required=True, help="Root output directory; caches will be saved under output-dir/cache/")
     parser.add_argument("--prompt_with_image", action="store_true", help="load VLM to rephrase prompt but need to be set to True")
     parser.add_argument("--fixed_prompt", action="store_true", help="Use fixed prompt instead of random (default: random for diversity)")
-    parser.add_argument("--prompt_type", type=str, default="edit", choices=["edit", "generate", "annotated_edit", "doodle_edit"],
+    parser.add_argument("--prompt_type", type=str, default="edit", choices=["edit", "generate", "annotated_edit", "doodle_edit", "pointer_edit"],
                        help="Prompt type: 'edit' for image editing, 'generate' for text-to-image generation (default: edit)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for prompt selection (default: 42 for reproducibility)")
     parser.add_argument("--max_samples", type=int, default=4000, help="Maximum number of samples to process (for quick testing, e.g., 500 or 1000)")
@@ -181,10 +204,10 @@ def main():
     img_cache_dir = cache_dir /  "img_embs"
     ctrl_cache_dir = cache_dir /  "img_embs_control"
     
-    cache_dir.mkdir(exist_ok=True)
-    txt_cache_dir.mkdir(exist_ok=True)
-    img_cache_dir.mkdir(exist_ok=True)
-    ctrl_cache_dir.mkdir(exist_ok=True)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    txt_cache_dir.mkdir(parents=True, exist_ok=True)
+    img_cache_dir.mkdir(parents=True, exist_ok=True)
+    ctrl_cache_dir.mkdir(parents=True, exist_ok=True)
     
     # 预先获取并排序文件列表，确保一致性（特别是当使用max_samples时）
     if ctrl_dir is not None:
