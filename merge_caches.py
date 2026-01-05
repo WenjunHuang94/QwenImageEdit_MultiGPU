@@ -13,7 +13,7 @@ import shutil
 from tqdm import tqdm
 
 
-def merge_caches(cache1_dir, cache2_dir, output_dir):
+def merge_caches(cache1_dir, cache2_dir, output_dir, max_samples_per_dataset=None):
     """
     合并两个cache目录的数据
 
@@ -21,7 +21,7 @@ def merge_caches(cache1_dir, cache2_dir, output_dir):
         cache1_dir: 第一个cache目录（数据集1，如cache2）
         cache2_dir: 第二个cache目录（数据集2，如cache5）
         output_dir: 输出目录（合并后的cache）
-        dataset1_use_img_as_control: 对于数据集1，是否使用img_embs作为control（默认True）
+        max_samples_per_dataset: 每个数据集的最大样本数（None表示处理全部）
     """
     cache1 = Path(cache1_dir)
     cache2 = Path(cache2_dir)
@@ -45,8 +45,22 @@ def merge_caches(cache1_dir, cache2_dir, output_dir):
     cache2_img = sorted(cache2.glob("img_embs/*.pt"))
     cache2_ctrl = sorted(cache2.glob("img_embs_control/*.pt")) if (cache2 / "img_embs_control").exists() else []
 
-    print(f"数据集1: {len(cache1_txt)} 个text, {len(cache1_img)} 个img, {len(cache1_ctrl)} 个control")
-    print(f"数据集2: {len(cache2_txt)} 个text, {len(cache2_img)} 个img, {len(cache2_ctrl)} 个control")
+    print(f"数据集1（原始）: {len(cache1_txt)} 个text, {len(cache1_img)} 个img, {len(cache1_ctrl)} 个control")
+    print(f"数据集2（原始）: {len(cache2_txt)} 个text, {len(cache2_img)} 个img, {len(cache2_ctrl)} 个control")
+
+    # 限制每个数据集的样本数量
+    if max_samples_per_dataset is not None:
+        cache1_txt = cache1_txt[:max_samples_per_dataset]
+        cache1_img = cache1_img[:max_samples_per_dataset]
+        cache1_ctrl = cache1_ctrl[:max_samples_per_dataset]
+        
+        cache2_txt = cache2_txt[:max_samples_per_dataset]
+        cache2_img = cache2_img[:max_samples_per_dataset]
+        cache2_ctrl = cache2_ctrl[:max_samples_per_dataset]
+        
+        print(f"\n限制后：")
+        print(f"数据集1: {len(cache1_txt)} 个样本（限制为 {max_samples_per_dataset}）")
+        print(f"数据集2: {len(cache2_txt)} 个样本（限制为 {max_samples_per_dataset}）")
 
     # 用于跟踪文件名，避免冲突
     file_counter = 0
@@ -92,12 +106,15 @@ if __name__ == "__main__":
     parser.add_argument("--output", required=True, help="输出目录（合并后的cache）")
     parser.add_argument("--dataset1_use_img_as_control", action="store_true", default=True,
                         help="对于数据集1，使用img_embs作为control（默认True，适用于文本到图像任务）")
+    parser.add_argument("--max_samples_per_dataset", type=int, default=2000,
+                        help="限制每个数据集的最大样本数（默认None，处理全部）")
 
     args = parser.parse_args()
 
     merge_caches(
         args.cache1,
         args.cache2,
-        args.output
+        args.output,
+        args.max_samples_per_dataset
     )
 
