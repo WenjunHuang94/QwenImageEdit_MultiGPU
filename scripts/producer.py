@@ -21,48 +21,78 @@ def get_image_files(directory):
     jpg_files = list(directory.rglob("*.jpg"))
     return png_files + jpg_files
 
-def get_prompt(use_random=True):
+def get_prompt(use_random=True, prompt_type="edit"):
     """
     获取 instruction prompt，支持多种变体以增加训练数据的多样性
     
-    针对任务：根据原始图片和文字指令编辑图像（在现有图片上添加/修改内容）
-    
     Args:
         use_random: 是否随机选择 instruction（推荐 True，增加数据多样性）
+        prompt_type: prompt类型
+            - "edit": 图像编辑任务（根据原始图片和文字指令编辑图像）
+            - "generate": 文本描述生成图片任务（根据文字描述绘画出真实图片）
     
     Returns:
         instruction 字符串
     """
-    # 图像编辑任务相关的 instruction 变体（中英文混合）
-    # 强调根据文字指令编辑/修改现有图像，而非从零生成
-    instructions = [
-        # 中文变体 - 强调编辑图像
-        "根据图片中的文字指令编辑图像",
-        "按照文字描述修改图片",
-        "根据文字提示在图片上添加内容",
-        "按照图片中的文字指令编辑图像",
-        "根据文字描述编辑图片",
-        "按照文字提示修改图像",
-        "根据图片中的文字编辑图像",
-        "按照文字指令在图片上添加内容",
-        "根据文字描述在图片上进行编辑",
-        "按照文字提示编辑图片",
-        "根据图片中的文字指令修改图像",
-        "按照文字描述在图片上添加元素",
-        "根据文字提示编辑图像",
-        "按照图片中的文字修改图像",
-        "根据文字指令编辑图片",
-        
-        # 英文变体（如果希望模型支持英文）
-        "Edit the image according to the text instruction in the image",
-        "Modify the image based on the text description in the image",
-        "Edit the image according to the text prompt",
-        "Modify the image based on the text instruction",
-        "Edit the image following the text description",
-        "Apply the text instruction to edit the image",
-        "Edit the image according to the text in the image",
-        "Modify the image based on the text prompt in the image",
-    ]
+    if prompt_type == "generate":
+        # 文本描述生成图片任务相关的 instruction 变体
+        instructions = [
+            # 中文变体 - 强调根据文字描述生成图片
+            "根据图片文字描述绘画出真实图片",
+            "根据文字描述生成真实图片",
+            "按照文字描述绘制真实图片",
+            "根据图片中的文字描述生成图片",
+            "按照文字提示绘画出真实图片",
+            "根据文字描述创作真实图片",
+            "按照图片文字描述生成真实图像",
+            "根据文字提示绘制真实图片",
+            "按照文字描述生成图片",
+            "根据图片中的文字描述绘画图片",
+            "按照文字提示生成真实图片",
+            "根据文字描述绘制图片",
+            "按照图片文字描述创作真实图片",
+            "根据文字提示生成图片",
+            "按照文字描述绘画图片",
+            
+            # 英文变体
+            "Generate a realistic image based on the text description in the image",
+            "Draw a realistic image according to the text description",
+            "Create a realistic image from the text description",
+            "Generate an image based on the text prompt in the image",
+            "Draw a realistic picture according to the text description",
+            "Create a picture from the text description in the image",
+        ]
+    else:
+        # 图像编辑任务相关的 instruction 变体（中英文混合）
+        # 强调根据文字指令编辑/修改现有图像，而非从零生成
+        instructions = [
+            # 中文变体 - 强调编辑图像
+            "根据图片中的文字指令编辑图像",
+            "按照文字描述修改图片",
+            "根据文字提示在图片上添加内容",
+            "按照图片中的文字指令编辑图像",
+            "根据文字描述编辑图片",
+            "按照文字提示修改图像",
+            "根据图片中的文字编辑图像",
+            "按照文字指令在图片上添加内容",
+            "根据文字描述在图片上进行编辑",
+            "按照文字提示编辑图片",
+            "根据图片中的文字指令修改图像",
+            "按照文字描述在图片上添加元素",
+            "根据文字提示编辑图像",
+            "按照图片中的文字修改图像",
+            "根据文字指令编辑图片",
+            
+            # 英文变体（如果希望模型支持英文）
+            "Edit the image according to the text instruction in the image",
+            "Modify the image based on the text description in the image",
+            "Edit the image according to the text prompt",
+            "Modify the image based on the text instruction",
+            "Edit the image following the text description",
+            "Apply the text instruction to edit the image",
+            "Edit the image according to the text in the image",
+            "Modify the image based on the text prompt in the image",
+        ]
     
     if use_random:
         # 随机选择，增加数据多样性，提高模型泛化能力
@@ -85,6 +115,8 @@ def main():
     parser.add_argument("--output_dir", required=True, help="Root output directory; caches will be saved under output-dir/cache/")
     parser.add_argument("--prompt_with_image", action="store_true", help="load VLM to rephrase prompt but need to be set to True")
     parser.add_argument("--fixed_prompt", action="store_true", help="Use fixed prompt instead of random (default: random for diversity)")
+    parser.add_argument("--prompt_type", type=str, default="edit", choices=["edit", "generate"],
+                       help="Prompt type: 'edit' for image editing, 'generate' for text-to-image generation (default: edit)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for prompt selection (default: 42 for reproducibility)")
     parser.add_argument("--max_samples", type=int, default=2000, help="Maximum number of samples to process (for quick testing, e.g., 500 or 1000)")
     args = parser.parse_args()
@@ -147,7 +179,7 @@ def main():
                 calculated_width, calculated_height = calculate_dimensions(args.target_area, img.size[0] / img.size[1])
                 prompt_image = text_encoding_pipeline.image_processor.resize(img, calculated_height, calculated_width)
 
-                prompt = get_prompt(use_random=not args.fixed_prompt)
+                prompt = get_prompt(use_random=not args.fixed_prompt, prompt_type=args.prompt_type)
                 prompt_embeds, prompt_embeds_mask = text_encoding_pipeline.encode_prompt(
                     image=prompt_image,
                     prompt=[prompt],
