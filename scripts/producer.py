@@ -84,6 +84,27 @@ def get_prompt(use_random=True, prompt_type="edit"):
             "Generate the content in the boxed area as described by the text prompt",
             "Follow the visual markers and text instructions to modify the image",
         ]
+    elif prompt_type == "doodle_edit":
+        # 针对涂鸦引导的任务
+        instructions = [
+            # 中文变体 - 强调将涂鸦转化为真实感
+            "将图片中的涂鸦内容绘画成真实的物体",
+            "根据图中的手绘涂鸦生成对应的真实图像内容",
+            "参考图片中的涂鸦形状，在对应位置绘制出真实的物体",
+            "按照图中的涂鸦痕迹，将其修改为具有真实质感的实景",
+            "根据图片中的手绘提示，在对应位置生成真实的景象",
+            "根据图片中的涂鸦引导，绘画出文字描述的实物",
+            "将图中的简单涂鸦转化为细腻的真实效果",
+            "参考涂鸦的轮廓，在图片上生成真实的装饰或物体",
+
+            # 英文变体
+            "Convert the doodle in the image into a realistic object",
+            "Generate realistic content based on the hand-drawn sketches in the image",
+            "Turn the simple drawings in the image into realistic photographic elements",
+            "Refine the doodles in the image into real-life objects following the text prompt",
+            "Translate the visual sketches into realistic textures and shapes",
+            "Use the provided doodles as a guide to paint realistic objects on the image"
+        ]
     else:
         # 图像编辑任务相关的 instruction 变体（中英文混合）
         # 强调根据文字指令编辑/修改现有图像，而非从零生成
@@ -137,7 +158,7 @@ def main():
     parser.add_argument("--output_dir", required=True, help="Root output directory; caches will be saved under output-dir/cache/")
     parser.add_argument("--prompt_with_image", action="store_true", help="load VLM to rephrase prompt but need to be set to True")
     parser.add_argument("--fixed_prompt", action="store_true", help="Use fixed prompt instead of random (default: random for diversity)")
-    parser.add_argument("--prompt_type", type=str, default="edit", choices=["edit", "generate", "annotated_edit"],
+    parser.add_argument("--prompt_type", type=str, default="edit", choices=["edit", "generate", "annotated_edit", "doodle_edit"],
                        help="Prompt type: 'edit' for image editing, 'generate' for text-to-image generation (default: edit)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for prompt selection (default: 42 for reproducibility)")
     parser.add_argument("--max_samples", type=int, default=4000, help="Maximum number of samples to process (for quick testing, e.g., 500 or 1000)")

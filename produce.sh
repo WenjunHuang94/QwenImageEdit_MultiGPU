@@ -13,5 +13,6 @@ python scripts/producer.py \
     --target_area $RESOLUTION \
     --output_dir "$CACHE" \
     --prompt_type "annotated_edit" \
+    --max_samples 2000 \
     --prompt_with_image \
     "$@"
