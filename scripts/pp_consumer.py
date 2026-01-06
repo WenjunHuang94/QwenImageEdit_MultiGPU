@@ -120,7 +120,7 @@ def main():
     # > LoRA config —— 先插 LoRA 再分片
     lora_config = LoraConfig(
         r=args.rank,
-        lora_alpha=2*args.rank,  # TODO: 需要根据实际效果调整
+        lora_alpha=2*args.rank,  # TODO: 需要根据实际效果调整,这是缩放因子，不是将rank设置为两倍！！！！！！
         init_lora_weights='gaussian',  # TODO:原来是 loftq
         target_modules=[
         "to_k", "to_q", "to_v", "to_out.0", 
