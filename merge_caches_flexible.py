@@ -99,6 +99,29 @@ def merge_caches_flexible(cache_entries, output_dir, seed=42):
     
     total_samples = 0
     file_counter = 0
+
+    # 处理每个cache条目
+    for idx, entry in enumerate(cache_entries):
+        cache_path, prefix, max_samples = parse_cache_entry(entry)
+        cache = Path(cache_path)
+
+        print(f"\n[{idx + 1}/{len(cache_entries)}] 处理: {cache_path}")
+        print(f"  前缀: {prefix if prefix else '(无)'}")
+        print(f"  最大样本数: {max_samples if max_samples else '全部'}")
+
+        if not cache.exists():
+            print(f"  ⚠️  警告: cache目录不存在，跳过")
+            continue
+
+        # 获取所有文件
+        txt_files = sorted(cache.glob("text_embs/*.pt"))
+        img_files = sorted(cache.glob("img_embs/*.pt"))
+        ctrl_files = sorted(cache.glob("img_embs_control/*.pt")) if (cache / "img_embs_control").exists() else []
+
+        # 检查文件一致性问题
+        if not check_files_consistency(txt_files, img_files, ctrl_files, cache_path):
+            print(f"  ⚠️  警告: {cache_path} 的文件不一致!!!")
+            raise Exception(f"{cache_path} 的文件不一致")
     
     print("==========================================")
     print("开始合并多个cache目录")
@@ -121,11 +144,6 @@ def merge_caches_flexible(cache_entries, output_dir, seed=42):
         txt_files = sorted(cache.glob("text_embs/*.pt"))
         img_files = sorted(cache.glob("img_embs/*.pt"))
         ctrl_files = sorted(cache.glob("img_embs_control/*.pt")) if (cache / "img_embs_control").exists() else []
-        
-        # 检查文件一致性问题
-        if not check_files_consistency(txt_files, img_files, ctrl_files, cache_path):
-            print(f"  ⚠️  警告: {cache_path} 的文件不一致!!!")
-            raise Exception(f"{cache_path} 的文件不一致")
         
         # 确保文件数量一致（虽然已经检查过，但保留此逻辑以防万一）
         min_count = min(len(txt_files), len(img_files), len(ctrl_files))
