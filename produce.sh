@@ -2,7 +2,7 @@
 MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwen-Image-Edit"
 IMG="/storage/v-jinpewang/lab_folder/junchao/data/image_eidt_dataset/processed_data_Accgen/with_textbox/output/"
 CTRL="/storage/v-jinpewang/lab_folder/junchao/data/image_eidt_dataset/processed_data_Accgen/with_textbox/input/"
-CACHE="cache6/"
+CACHE="cache6-2/"
 
 RESOLUTION=$((512*512))
 
@@ -15,4 +15,6 @@ python scripts/producer.py \
     --prompt_type "annotated_edit" \
     --max_samples 2000 \
     --prompt_with_image \
+    --seed 1234 \
+    --shuffle_input \
     "$@"

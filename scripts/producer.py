@@ -185,6 +185,7 @@ def main():
                        help="Prompt type: 'edit' for image editing, 'generate' for text-to-image generation (default: edit)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for prompt selection (default: 42 for reproducibility)")
     parser.add_argument("--max_samples", type=int, default=4000, help="Maximum number of samples to process (for quick testing, e.g., 500 or 1000)")
+    parser.add_argument("--shuffle_input", action="store_true", help="Shuffle input files before selection")
     args = parser.parse_args()
     
     # 设置固定的随机种子（默认 42，保证可复现性）
@@ -213,6 +214,19 @@ def main():
     if ctrl_dir is not None:
         all_ctrl_files = sorted(get_image_files(ctrl_dir))
         all_img_files = sorted(get_image_files(img_dir))
+
+        # >>>>> 新增代码开始 >>>>>
+        if args.shuffle_input:
+            print(f"🔀 正在根据种子 {args.seed} 随机打乱文件列表...")
+            # 必须保证 image 和 control 使用相同的随机顺序，否则图片和控制图会对不上！
+            # 这种写法利用 zip 绑定打乱，再解压
+            combined = list(zip(all_ctrl_files, all_img_files))
+            random.shuffle(combined)
+            all_ctrl_files, all_img_files = zip(*combined)
+            all_ctrl_files = list(all_ctrl_files)
+            all_img_files = list(all_img_files)
+        # <<<<< 新增代码结束 <<<<<
+
         # 如果设置了最大样本数，只处理前N个（用于快速测试）
         if args.max_samples is not None:
             if len(all_ctrl_files) > args.max_samples:
@@ -223,6 +237,13 @@ def main():
     else:
         all_ctrl_files = []
         all_img_files = sorted(get_image_files(img_dir))
+
+        # >>>>> 新增代码开始 (针对无 control 的情况) >>>>>
+        if args.shuffle_input:
+            print(f"🔀 正在根据种子 {args.seed} 随机打乱文件列表...")
+            random.shuffle(all_img_files)
+        # <<<<< 新增代码结束 <<<<<
+
         if args.max_samples is not None and len(all_img_files) > args.max_samples:
             print(f"限制处理数量：从 {len(all_img_files)} 个样本中选择前 {args.max_samples} 个")
             all_img_files = all_img_files[:args.max_samples]
