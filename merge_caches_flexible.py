@@ -32,6 +32,48 @@ def parse_cache_entry(entry):
     return cache_path, prefix, max_samples
 
 
+def check_files_consistency(txt_files, img_files, ctrl_files, cache_path):
+    """
+    检查txt_files、img_files、ctrl_files的长度和文件名是否一致
+    
+    Args:
+        txt_files: text_embs文件列表
+        img_files: img_embs文件列表
+        ctrl_files: img_embs_control文件列表
+        cache_path: cache目录路径（用于错误提示）
+    
+    Returns:
+        bool: 是否一致
+    """
+    # 检查长度
+    txt_count = len(txt_files)
+    img_count = len(img_files)
+    ctrl_count = len(ctrl_files)
+    
+    if txt_count != img_count or txt_count != ctrl_count:
+        print(f"  ❌ 错误: 文件数量不一致！")
+        print(f"     text_embs: {txt_count} 个文件")
+        print(f"     img_embs: {img_count} 个文件")
+        print(f"     img_embs_control: {ctrl_count} 个文件")
+        return False
+    
+    # 检查文件名是否一致（去掉路径和扩展名，只比较文件名）
+    for i, (txt_file, img_file, ctrl_file) in enumerate(zip(txt_files, img_files, ctrl_files)):
+        txt_name = txt_file.stem  # 文件名（不含扩展名）
+        img_name = img_file.stem
+        ctrl_name = ctrl_file.stem
+        
+        if txt_name != img_name or txt_name != ctrl_name:
+            print(f"  ❌ 错误: 第 {i+1} 个文件的名字不一致！")
+            print(f"     text_embs: {txt_name}")
+            print(f"     img_embs: {img_name}")
+            print(f"     img_embs_control: {ctrl_name}")
+            return False
+    
+    print(f"  ✓  检查通过: {txt_count} 个文件，文件名一致")
+    return True
+
+
 def merge_caches_flexible(cache_entries, output_dir, seed=42):
     """
     灵活合并多个cache目录
@@ -80,7 +122,12 @@ def merge_caches_flexible(cache_entries, output_dir, seed=42):
         img_files = sorted(cache.glob("img_embs/*.pt"))
         ctrl_files = sorted(cache.glob("img_embs_control/*.pt")) if (cache / "img_embs_control").exists() else []
         
-        # 确保文件数量一致
+        # 检查文件一致性问题
+        if not check_files_consistency(txt_files, img_files, ctrl_files, cache_path):
+            print(f"  ⚠️  警告: {cache_path} 的文件不一致!!!")
+            raise Exception(f"{cache_path} 的文件不一致")
+        
+        # 确保文件数量一致（虽然已经检查过，但保留此逻辑以防万一）
         min_count = min(len(txt_files), len(img_files), len(ctrl_files))
         txt_files = txt_files[:min_count]
         img_files = img_files[:min_count]
