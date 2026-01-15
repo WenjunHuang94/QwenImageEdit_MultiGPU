@@ -1,0 +1,12 @@
+[
+  {
+    "img_path": "./image_000000.JPEG",
+    "prompt": "Generate a realistic image based on the text description in the image",
+    "output_name": "image_000000.JPEG"
+  },
+  {
+    "img_path": "./test2.jpg",
+    "prompt": "Edit the image according to the text instruction in the image",
+    "output_name": "test2.jpg"
+  }
+]
