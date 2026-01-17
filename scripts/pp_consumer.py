@@ -296,7 +296,7 @@ def main():
 
     # > wandb init
     wandb.init(
-        project="qwen_lora",
+        project="qwen_lora2",
         name=run_name,  # 使用带时间的唯一名字
         config={
             "learning_rate": args.learning_rate,

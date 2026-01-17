@@ -3,9 +3,9 @@ MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwe
 TXT="cache_all_balanced/text_embs/"
 IMG="cache_all_balanced/img_embs/"
 CTRL="cache_all_balanced/img_embs_control/"
-OUTPUT="result13_cache_all_balanced/"
+OUTPUT="result14-rank64_cache_all_balanced/"
 
-LORA_RANK=128
+LORA_RANK=64
 LR=3e-4
 
 # 训练参数建议（针对10000个样本，batch_size=1）：
@@ -14,7 +14,7 @@ LR=3e-4
 # - WARM_STEP: 总步数的5-10%，用于学习率预热
 # - CKP: 每500-1000步保存一次检查点
 EPOCH=2
-WARM_STEP=1000
+WARM_STEP=200
 MAX_STEP=40000
 CKP=200
 
