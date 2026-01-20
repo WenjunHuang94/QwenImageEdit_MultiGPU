@@ -11,9 +11,9 @@ import time
 dashscope.api_key = "sk-1649650cd15847b685cd57def55a7a56"  # 注意保护你的 Key
 
 # ... (路径配置保持不变) ...
-ORIGINAL_IMAGES = "./images_with_text_instructions"
-PROMPTS_FOLDER = "./images_with_text_instructions_result"
-OUTPUT_FOLDER = "./edited_images_output"
+ORIGINAL_IMAGES = "./images_with_box_instructions"
+PROMPTS_FOLDER = "./images_with_box_instructions_result"
+OUTPUT_FOLDER = "./images_with_box_instructions_edited_images_output"
 
 RETRY_TIMES = 3
 RETRY_DELAY = 2

@@ -8,13 +8,13 @@ from tqdm import tqdm
 
 # 1. 路径设置
 # [输入] 原始图片文件夹
-INPUT_IMAGE_FOLDER = "./images_with_text_instructions"
+INPUT_IMAGE_FOLDER = "./images_with_box_instructions"
 
 # [输入] VLM 生成的 Prompt 文本文件夹
-INPUT_PROMPT_FOLDER = "./images_with_text_instructions_result"
+INPUT_PROMPT_FOLDER = "./images_with_box_instructions_result"
 
 # [输出] 结果保存文件夹
-OUTPUT_IMAGE_FOLDER = "./local_base_model_results"
+OUTPUT_IMAGE_FOLDER = "./images_with_box_instructions_local_base_model_results"
 
 # 2. 模型设置
 BASE_MODEL_PATH = "Qwen/Qwen-Image-Edit"
