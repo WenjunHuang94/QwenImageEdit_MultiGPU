@@ -1,9 +1,9 @@
 #! /bin/bash
 
 MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwen-Image-Edit"
-LORA_PATH="./result13_cache_all_balanced/checkpoint-40000"
+LORA_PATH="./result14-rank64_cache_all_balanced/checkpoint-14200"
 TASK_FILE="./tasks.json"
-OUTPUT_DIR="./outputs_batch"
+OUTPUT_DIR="./outputs2_batch"
 
 python scripts/quick_infer_batch.py \
     --pretrained_model "$MODEL_PATH" \
