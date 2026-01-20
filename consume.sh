@@ -3,25 +3,26 @@ MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwe
 TXT="cache_all_balanced/text_embs/"
 IMG="cache_all_balanced/img_embs/"
 CTRL="cache_all_balanced/img_embs_control/"
-OUTPUT="result14-rank64_cache_all_balanced/"
+OUTPUT="result15-rank64_cache_all_balanced/"
 
 LORA_RANK=64
-LR=3e-4
+LR=1e-4  # 降低学习率！基于checkpoint-3000训练，需要保护已有的优秀权重
 
-# 训练参数建议（针对10000个样本，batch_size=1）：
+# 训练参数建议（基于checkpoint-3000继续训练混合数据集）：
+# - LR: 1e-4（比从零训练的3e-4低，避免破坏已有的生成能力）
 # - EPOCH: 1-2个epoch通常足够，LoRA训练收敛快
 # - MAX_STEP: 10000-20000步（1-2个epoch）
-# - WARM_STEP: 总步数的5-10%，用于学习率预热
-# - CKP: 每500-1000步保存一次检查点
+# - WARM_STEP: 1000-2000步，让模型平滑适应混合数据（包含新的Edit任务）
+# - CKP: 每200-500步保存一次检查点，方便观察能力变化
 EPOCH=2
-WARM_STEP=200
+WARM_STEP=500  # 增加warmup，让模型适应新的数据分布
 MAX_STEP=40000
 CKP=200
 
 # 可选：从检查点恢复训练（取消注释并设置路径）
 # 例如：RESUME_FROM="result/checkpoint-250"
 # 如果未设置或注释掉，则从头开始训练
-RESUME_FROM=""
+RESUME_FROM="./result4/checkpoint-3000"
 
 # 可选：启用保存最佳模型（设置为 true 或 false，或留空）
 # 如果启用，会在每次发现更好的损失时自动保存到 output_dir/best/
