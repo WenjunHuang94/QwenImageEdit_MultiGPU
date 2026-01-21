@@ -1,12 +1,22 @@
 [
   {
-    "img_path": "./image_000000.JPEG",
-    "prompt": "Generate a realistic image based on the text description in the image",
-    "output_name": "image_000000.JPEG"
+    "img_path": "./hwj_images/000001_00000303_textbox.png",
+    "prompt": "Modify the image at the annotated location according to the text instruction"
   },
   {
-    "img_path": "./test2.jpg",
-    "prompt": "Edit the image according to the text instruction in the image",
-    "output_name": "test2.jpg"
+    "img_path": "./hwj_images/00000005.png",
+    "prompt": "Follow the visual pointer and text to edit the image"
+  },
+  {
+    "img_path": "./hwj_images/task_obj_add_108-1.png",
+    "prompt": "Edit the image according to the text instruction in the image"
+  },
+  {
+    "img_path": "./hwj_images/task_obj_remove_108.png",
+    "prompt": "Follow the visual pointer and text to edit the image"
+  },
+  {
+    "img_path": "./hwj_images/task_obj_swap_joint_mask_9812-1.png",
+    "prompt": "Follow the visual pointer and text to edit the image"
   }
 ]

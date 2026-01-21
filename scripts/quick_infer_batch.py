@@ -53,9 +53,21 @@ def main():
     for i, task in enumerate(tasks):
         img_path = task['img_path']
         prompt = task['prompt']
-        save_path = os.path.join(args.output_dir, task.get('output_name', f"out_{i}.png"))
+        
+        # 如果没有指定 output_name，使用原图片的文件名
+        if 'output_name' in task and task['output_name']:
+            output_name = task['output_name']
+        else:
+            # 从 img_path 提取文件名
+            original_filename = os.path.basename(img_path)
+            # 保持原扩展名
+            output_name = original_filename
+            # 如果想统一改为 .png，取消下面的注释
+            # output_name = os.path.splitext(original_filename)[0] + ".png"
+        
+        save_path = os.path.join(args.output_dir, output_name)
 
-        print(f"[{i + 1}/{len(tasks)}] Processing: {img_path} with prompt: {prompt}")
+        print(f"[{i + 1}/{len(tasks)}] Processing: {img_path} -> {output_name}")
 
         image = get_image(img_path)
 

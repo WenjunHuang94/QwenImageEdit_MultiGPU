@@ -15,7 +15,7 @@
 # 示例 2: 抽取 500 张图片，指定输出路径
 echo "📊 示例 2: 抽取 500 张图片，自定义路径"
 python batch_sample_and_generate.py \
-    --source_folder "./storage/v-jinpewang/lab_folder/junchao/data/image_eidt_dataset/processed_data_wo_textbox/addtion/omniedit/input/" \
+    --source_folder "/storage/v-jinpewang/lab_folder/junchao/data/image_eidt_dataset/processed_data_wo_textbox/addtion/omniedit/input/" \
     --num_samples 500 \
     --target_folder "./sampled_images_500" \
     --output_folder "./sampled_prompts_500" \
