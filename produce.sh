@@ -4,6 +4,7 @@ IMG="/storage/v-jinpewang/lab_folder/junchao/data/image_eidt_dataset/processed_d
 CTRL="/storage/v-jinpewang/lab_folder/junchao/data/image_eidt_dataset/processed_data_Accgen/with_textbox/input/"
 CACHE="cache6-2/"
 
+
 RESOLUTION=$((512*512))
 
 python scripts/producer.py \
