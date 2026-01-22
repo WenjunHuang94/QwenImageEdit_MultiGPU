@@ -18,5 +18,13 @@
   {
     "img_path": "./hwj_images/task_obj_swap_joint_mask_9812-1.png",
     "prompt": "Follow the visual pointer and text to edit the image"
+  },
+  {
+    "img_path": "./hwj_images/image_000000.JPEG",
+    "prompt": "Generate a realistic image based on the text description in the image"
+  },
+  {
+    "img_path": "./hwj_images/00000303.png",
+    "prompt": "Edit the image according to the text instruction in the image"
   }
 ]
