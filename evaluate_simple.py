@@ -1,6 +1,7 @@
 """
 简化版评估脚本：对比 Qwen-Base vs Qwen+LoRA
 使用Ground Truth作为参考
+支持多种图片格式（.png, .jpg, .jpeg, .JPEG等）
 """
 
 import torch
@@ -56,6 +57,18 @@ class SimpleEvaluator:
         
         print("="*60)
     
+    def find_image_file(self, directory: Path, sample_id: str) -> Path:
+        """查找图片文件，支持多种格式"""
+        # 支持的图片格式
+        extensions = ['.png', '.jpg', '.jpeg', '.JPEG', '.JPG', '.PNG']
+        
+        for ext in extensions:
+            image_path = directory / f"{sample_id}{ext}"
+            if image_path.exists():
+                return image_path
+        
+        return None
+    
     def compute_clip_image_similarity(self, image1_path: str, image2_path: str) -> float:
         """计算两张图片的CLIP相似度"""
         img1 = self.clip_preprocess(Image.open(image1_path)).unsqueeze(0).to(self.device)
@@ -99,7 +112,6 @@ class SimpleEvaluator:
             
             return psnr(img1, img2)
         except Exception as e:
-            print(f"  ⚠ PSNR error: {e}")
             return None
     
     def compute_ssim(self, image1_path: str, image2_path: str) -> float:
@@ -111,34 +123,28 @@ class SimpleEvaluator:
             if img1.shape != img2.shape:
                 img2 = cv2.resize(img2, (img1.shape[1], img1.shape[0]))
             
-            # 转换为灰度图
             gray1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)
             gray2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
             
             return ssim(gray1, gray2)
         except Exception as e:
-            print(f"  ⚠ SSIM error: {e}")
             return None
     
     def compute_mrr(self, image_path: str) -> float:
-        """计算标记去除率（Marker Removal Rate）"""
+        """计算标记去除率"""
         try:
             img = cv2.imread(image_path)
             if img is None:
                 return None
             
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            
-            # 检测红色标记像素（方框、箭头通常是红色）
             red_mask = (img_rgb[:, :, 0] > 200) & (img_rgb[:, :, 1] < 100) & (img_rgb[:, :, 2] < 100)
             marker_pixels = np.sum(red_mask)
-            
             total_pixels = img_rgb.shape[0] * img_rgb.shape[1]
             mrr = 1.0 - (marker_pixels / total_pixels)
             
             return max(0.0, min(1.0, mrr))
         except Exception as e:
-            print(f"  ⚠ MRR error: {e}")
             return None
     
     def evaluate_sample(self, sample: dict, generated_path: str) -> dict:
@@ -151,7 +157,7 @@ class SimpleEvaluator:
             'type': sample['type']
         }
         
-        # 1. CLIP Score (生成图 vs Ground Truth) - 最重要！
+        # CLIP Score (vs GT)
         if ground_truth_path and Path(ground_truth_path).exists():
             results['clip_score_gt'] = self.compute_clip_image_similarity(
                 generated_path, ground_truth_path
@@ -159,7 +165,7 @@ class SimpleEvaluator:
         else:
             results['clip_score_gt'] = None
         
-        # 2. CLIP Score (生成图 vs 文本指令) - 辅助
+        # CLIP Score (vs Text)
         if text_instruction:
             results['clip_score_text'] = self.compute_clip_text_similarity(
                 generated_path, text_instruction
@@ -167,19 +173,19 @@ class SimpleEvaluator:
         else:
             results['clip_score_text'] = None
         
-        # 3. PSNR (生成图 vs Ground Truth)
+        # PSNR
         if ground_truth_path and Path(ground_truth_path).exists():
             results['psnr'] = self.compute_psnr(generated_path, ground_truth_path)
         else:
             results['psnr'] = None
         
-        # 4. SSIM (生成图 vs Ground Truth)
+        # SSIM
         if ground_truth_path and Path(ground_truth_path).exists():
             results['ssim'] = self.compute_ssim(generated_path, ground_truth_path)
         else:
             results['ssim'] = None
         
-        # 5. MRR (标记去除率)
+        # MRR
         results['mrr'] = self.compute_mrr(generated_path)
         
         return results
@@ -199,30 +205,42 @@ class SimpleEvaluator:
         for sample in tqdm(test_data, desc="Evaluating"):
             sample_id = sample['id']
             
-            # 评估2个方法
             for method in ['qwen_base', 'ours']:
-                output_path = results_dir / method / f"{sample_id}.png"
+                # 查找图片文件（支持多种格式）
+                output_path = self.find_image_file(results_dir / method, sample_id)
                 
-                if output_path.exists():
+                if output_path:
                     result = self.evaluate_sample(sample, str(output_path))
                     result['method'] = method
                     all_results.append(result)
                 else:
-                    print(f"  ⚠ Missing: {output_path}")
+                    print(f"  ⚠ Missing: {results_dir / method / sample_id}.[png/jpg/jpeg/JPEG]")
         
-        # 转换为DataFrame
+        # 检查是否有结果
+        if len(all_results) == 0:
+            print("\n" + "="*80)
+            print("❌ ERROR: No results found!")
+            print("="*80)
+            print("\n📋 You need to generate model outputs first:\n")
+            print("Step 1: Generate Qwen-Base outputs")
+            print(f"  → Save to: {results_dir}/qwen_base/")
+            print(f"  → Files: {', '.join([s['id'] + '.[png/jpg]' for s in test_data[:3]])}...\n")
+            print("Step 2: Generate Qwen+LoRA outputs")
+            print(f"  → Save to: {results_dir}/ours/")
+            print(f"  → Files: {', '.join([s['id'] + '.[png/jpg]' for s in test_data[:3]])}...\n")
+            print("="*80)
+            return None, None
+        
         df = pd.DataFrame(all_results)
         
-        # 保存详细结果
+        # 保存结果
         output_path = Path(output_csv)
         output_path.parent.mkdir(parents=True, exist_ok=True)
         df.to_csv(output_path, index=False)
         
-        # 生成对比表格
         comparison_table = self.generate_comparison_table(df)
         comparison_table.to_csv(output_path.parent / "comparison_table.csv", index=False)
         
-        # 按类型分组
         type_table = self.generate_type_table(df)
         type_table.to_csv(output_path.parent / "type_comparison.csv", index=False)
         
@@ -246,33 +264,31 @@ class SimpleEvaluator:
         for method in ['qwen_base', 'ours']:
             method_df = df[df['method'] == method]
             
+            if len(method_df) == 0:
+                continue
+            
             row = {'Method': 'Qwen-Base' if method == 'qwen_base' else 'Ours (Qwen+LoRA)'}
             
-            # CLIP Score (vs GT)
             if method_df['clip_score_gt'].notna().any():
                 row['CLIP-GT'] = f"{method_df['clip_score_gt'].mean():.2f}"
             else:
                 row['CLIP-GT'] = "N/A"
             
-            # CLIP Score (vs Text)
             if method_df['clip_score_text'].notna().any():
                 row['CLIP-Text'] = f"{method_df['clip_score_text'].mean():.2f}"
             else:
                 row['CLIP-Text'] = "N/A"
             
-            # PSNR
             if method_df['psnr'].notna().any():
                 row['PSNR'] = f"{method_df['psnr'].mean():.2f}"
             else:
                 row['PSNR'] = "N/A"
             
-            # SSIM
             if method_df['ssim'].notna().any():
                 row['SSIM'] = f"{method_df['ssim'].mean():.3f}"
             else:
                 row['SSIM'] = "N/A"
             
-            # MRR
             if method_df['mrr'].notna().any():
                 row['MRR'] = f"{method_df['mrr'].mean():.1%}"
             else:
@@ -357,10 +373,15 @@ def main():
         output_csv=args.output_csv
     )
     
-    print("\n" + "="*80)
-    print("Evaluation Complete!")
-    print("="*80)
-    print(f"Results saved to: {args.output_csv}")
+    if comparison is not None:
+        print("\n" + "="*80)
+        print("✓ Evaluation Complete!")
+        print("="*80)
+        print(f"Results saved to: {args.output_csv}")
+    else:
+        print("\n" + "="*80)
+        print("❌ Evaluation failed - no results to evaluate")
+        print("="*80)
 
 
 if __name__ == "__main__":
