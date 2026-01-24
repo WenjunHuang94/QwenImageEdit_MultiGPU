@@ -1,0 +1,62 @@
+[
+  {
+    "id": "000001_00000303_textbox",
+    "type": "in_image_text",
+    "input_image": "./hwj_images/000001_00000303_textbox.png",
+    "ground_truth": "./ground_truth/000001_00000303_textbox.png",
+    "text_instruction": "A large elephant stands beside a red sports car in a savanna landscape. A vibrant rainbow arches across the sky above, contrasting with the dry grass and sparse trees. The scene blends natural wildlife with modern technology, symbolizing harmony between nature and innovation.",
+    "marker_box": null,
+    "arrow_region": null,
+    "object_name": null
+  },
+  {
+    "id": "00000005",
+    "type": "in_image_text",
+    "input_image": "./hwj_images/00000005.png",
+    "ground_truth": "./ground_truth/00000005.png",
+    "text_instruction": "A chocolate birthday cake adorned with a fondant unicorn and three pigs, symbolizing whimsy and fantasy. A purple ribbon with \"Happy Birthday\" wraps around the base, complemented by green grass details. The design blends playful charm with celebratory cheer.",
+    "marker_box": null,
+    "arrow_region": null,
+    "object_name": null
+  },
+  {
+    "id": "task_obj_add_108-1",
+    "type": "in_image_text",
+    "input_image": "./hwj_images/task_obj_add_108-1.png",
+    "ground_truth": "./ground_truth/task_obj_add_108-1.png",
+    "text_instruction": "A knight in brown armor and cloak stands in a misty forest, conversing with a woman in a dark cloak. A white horse with saddle stands nearby, surrounded by moss-covered trees, evoking a medieval or fantasy setting.",
+    "marker_box": null,
+    "arrow_region": null,
+    "object_name": null
+  },
+  {
+    "id": "task_obj_remove_108",
+    "type": "in_image_text",
+    "input_image": "./hwj_images/task_obj_remove_108.png",
+    "ground_truth": "./ground_truth/task_obj_remove_108.png",
+    "text_instruction": "A knight in ornate armor and cloak stands in a misty forest, facing a woman in a dark cloak. Twisted trees surround them, creating a mystical atmosphere. Their serious expressions suggest a moment of deep conversation or decision.",
+    "marker_box": null,
+    "arrow_region": null,
+    "object_name": null
+  },
+  {
+    "id": "task_obj_swap_joint_mask_9812-1",
+    "type": "in_image_text",
+    "input_image": "./hwj_images/task_obj_swap_joint_mask_9812-1.png",
+    "ground_truth": "./ground_truth/task_obj_swap_joint_mask_9812-1.png",
+    "text_instruction": "A man in a denim shirt holds his lower back, showing signs of discomfort or pain. He stands in a bright, modern home office with a desk, lamp, and flowers in the background, suggesting a moment of physical strain during daily activities.",
+    "marker_box": null,
+    "arrow_region": null,
+    "object_name": null
+  },
+  {
+    "id": "00000303",
+    "type": "in_image_text",
+    "input_image": "./hwj_images/00000303.png",
+    "ground_truth": "./ground_truth/00000303.png",
+    "text_instruction": "A majestic elephant stands in a dry savanna under a vibrant rainbow, symbolizing nature's beauty and resilience. The contrast of the powerful animal with the colorful arc evokes harmony between wildlife and wonder.",
+    "marker_box": null,
+    "arrow_region": null,
+    "object_name": null
+  }
+]
