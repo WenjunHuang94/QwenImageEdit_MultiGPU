@@ -68,35 +68,5 @@
     "marker_box": null,
     "arrow_region": null,
     "object_name": null
-  },
-    {
-    "id": "image_000000",
-    "type": "in_image_text",
-    "input_image": "./hwj_images/image_000000.JPEG",
-    "ground_truth": "./ground_truth/image_000000.JPEG",
-    "text_instruction": "A black rifle with a long barrel and a silver muzzle brake is lying on a blue cloth, and it has 'MGM 22 LONG RIFLE MATCH' engraved on its side.",
-    "marker_box": null,
-    "arrow_region": null,
-    "object_name": null
-  },
-    {
-    "id": "image_000000",
-    "type": "in_image_text",
-    "input_image": "./hwj_images/image_000000.JPEG",
-    "ground_truth": "./ground_truth/image_000000.JPEG",
-    "text_instruction": "A black rifle with a long barrel and a silver muzzle brake is lying on a blue cloth, and it has 'MGM 22 LONG RIFLE MATCH' engraved on its side.",
-    "marker_box": null,
-    "arrow_region": null,
-    "object_name": null
-  },
-    {
-    "id": "image_000000",
-    "type": "in_image_text",
-    "input_image": "./hwj_images/image_000000.JPEG",
-    "ground_truth": "./ground_truth/image_000000.JPEG",
-    "text_instruction": "A black rifle with a long barrel and a silver muzzle brake is lying on a blue cloth, and it has 'MGM 22 LONG RIFLE MATCH' engraved on its side.",
-    "marker_box": null,
-    "arrow_region": null,
-    "object_name": null
   }
 ]
