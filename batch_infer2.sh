@@ -7,9 +7,9 @@
 set -e
 
 # --- 路径配置 ---
-INPUT_DIR="./evaluation_samples_with_textbox_0124V1/input"
-OUTPUT_BASE="./evaluation_samples_with_textbox_0124V1/qwen_base"
-OUTPUT_OURS="./evaluation_samples_with_textbox_0124V1/ours"
+INPUT_DIR="./evaluation_samples_with_textbox_0124V2/input"
+OUTPUT_BASE="./evaluation_samples_with_textbox_0124V2/qwen_base"
+OUTPUT_OURS="./evaluation_samples_with_textbox_0124V2/ours"
 
 MODEL_PATH="/storage/v-jinpewang/az_workspace/wenjun/Qwen-Image2/my_hf_cache/Qwen-Image-Edit"
 LORA_PATH="./result15-rank64_cache_all_balanced/checkpoint-4200"
@@ -35,25 +35,25 @@ echo "Found $IMAGE_COUNT images in $INPUT_DIR"
 echo "------------------------------------------"
 echo "Running Step 1: Qwen-Base"
 echo "------------------------------------------"
-
-for ((i=0; i<$IMAGE_COUNT; i++)); do
-    img_path="${img_files[$i]}"
-    filename=$(basename "$img_path")
-    output_path="$OUTPUT_BASE/$filename"
-
-    echo "[$(($i+1))/$IMAGE_COUNT] Base Processing: $filename"
-
-    # 注意：不传入 --lora_weight 即可运行 Base 模型
-    python scripts/quick_infer.py \
-        --pretrained_model "$MODEL_PATH" \
-        --ctrl_img "$img_path" \
-        --output_img "$output_path" \
-        --prompt "$PROMPT" \
-        --cfg_scale 6.0 \
-        --infer_steps 50 \
-        --target_area $RESOLUTION \
-        --lora_weight ""
-done
+#
+#for ((i=0; i<$IMAGE_COUNT; i++)); do
+#    img_path="${img_files[$i]}"
+#    filename=$(basename "$img_path")
+#    output_path="$OUTPUT_BASE/$filename"
+#
+#    echo "[$(($i+1))/$IMAGE_COUNT] Base Processing: $filename"
+#
+#    # 注意：不传入 --lora_weight 即可运行 Base 模型
+#    python scripts/quick_infer.py \
+#        --pretrained_model "$MODEL_PATH" \
+#        --ctrl_img "$img_path" \
+#        --output_img "$output_path" \
+#        --prompt "$PROMPT" \
+#        --cfg_scale 6.0 \
+#        --infer_steps 50 \
+#        --target_area $RESOLUTION \
+#        --lora_weight ""
+#done
 
 # ========================================
 # Step 2: Qwen+LoRA 推理 (加载 LoRA)
