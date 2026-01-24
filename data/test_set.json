@@ -4,7 +4,7 @@
     "type": "in_image_text",
     "input_image": "./hwj_images/000001_00000303_textbox.png",
     "ground_truth": "./ground_truth/000001_00000303_textbox.png",
-    "text_instruction": "Modify the image at the annotated location according to the text instruction",
+    "text_instruction": "【Editing Instruction】: Remove the red bounding box and the text \"put a toy car\" from the image, then place a small, colorful toy car (approximately 10 cm in length, with bright red body, black wheels, and yellow roof) on the sandy ground directly in front of the elephant’s left front foot, ensuring it casts a soft shadow consistent with the ambient lighting and perspective of the scene. The toy car should appear realistic in scale relative to the elephant and blend naturally into the environment without disrupting the overall composition or lighting.",
     "marker_box": null,
     "arrow_region": null,
     "object_name": null
@@ -14,7 +14,7 @@
     "type": "in_image_text",
     "input_image": "./hwj_images/00000005.png",
     "ground_truth": "./ground_truth/00000005.png",
-    "text_instruction": "Follow the visual pointer and text to edit the image",
+    "text_instruction": "【Editing Instruction】: First, completely remove the red arrow and the text \"turn the object pointed to by the arrow into unicorns\" from the image, ensuring no traces of annotations remain—this includes erasing any residual pixels, halos, or distortions around the arrow and text so that the background appears seamless and unaltered. Then, transform the central brown pig figurine (the one pointed to by the arrow) into a unicorn by replacing it with a detailed, realistic-looking unicorn sculpture made of fondant or similar edible material, matching the style and scale of the surrounding pig figures. The unicorn should have a light pastel-colored body (e.g., pale lavender or cream), a flowing mane and tail in soft rainbow hues, a spiraled horn on its forehead, and expressive eyes, all proportionally consistent with the other animal figures on the cake. Ensure the new unicorn blends naturally into the scene with appropriate lighting, shadow, and texture to match the existing cake’s aesthetic, maintaining the chocolate frosting, purple ribbon, and grass-like decorations as they appear in the original.",
     "marker_box": null,
     "arrow_region": null,
     "object_name": null
@@ -24,7 +24,7 @@
     "type": "in_image_text",
     "input_image": "./hwj_images/task_obj_add_108-1.png",
     "ground_truth": "./ground_truth/task_obj_add_108-1.png",
-    "text_instruction": "Edit the image according to the text instruction in the image",
+    "text_instruction": "【Editing Instruction】: Add a white horse with a dark leather saddle and bridle in the background, positioned slightly to the right of the central figure and partially obscured by the tree trunks, at a distance that creates natural depth consistent with the forest setting; the horse should be facing left, standing still with its head slightly raised, rendered in realistic detail matching the cinematic lighting and atmosphere of the scene—soft, diffused daylight filtering through the overcast sky and moss-covered trees—ensuring shadows fall naturally toward the lower left, aligning with the ambient light direction; the horse’s coat should appear clean and bright white, contrasting subtly with the muted greens and browns of the environment, while maintaining appropriate scale relative to the human figures; ensure the addition blends seamlessly into the background without disrupting existing elements, and remove all visible text from the image, including the instruction \"Add a white horse with a saddle in the background,\" so the final output contains no annotations.",
     "marker_box": null,
     "arrow_region": null,
     "object_name": null
@@ -34,7 +34,7 @@
     "type": "in_image_text",
     "input_image": "./hwj_images/task_obj_remove_108.png",
     "ground_truth": "./ground_truth/task_obj_remove_108.png",
-    "text_instruction": "Follow the visual pointer and text to edit the image",
+    "text_instruction": "【Editing Instruction】: First, completely remove all artificial visual annotations from the image, including the red arrow pointing toward the background and the text overlay reading \"Remove a white horse with a saddle in the background.\" Ensure no residual pixels, halos, or distortions remain—fully erase these elements so the image appears clean and unmarked. Then, seamlessly remove the white horse with a saddle located in the background, behind the tree trunk to the right of the central figure. Carefully blend the surrounding forest environment, maintaining consistent lighting, depth, and texture to preserve natural continuity. Adjust shadows, foliage density, and perspective to ensure the area where the horse was positioned now harmonizes perfectly with the rest of the scene, as if the horse was never present.",
     "marker_box": null,
     "arrow_region": null,
     "object_name": null
@@ -44,7 +44,7 @@
     "type": "in_image_text",
     "input_image": "./hwj_images/task_obj_swap_joint_mask_9812-1.png",
     "ground_truth": "./ground_truth/task_obj_swap_joint_mask_9812-1.png",
-    "text_instruction": "Follow the visual pointer and text to edit the image",
+    "text_instruction": "【Editing Instruction】: First, completely remove all visual annotations from the image, including the red arrow pointing toward the man’s torso and the text \"Swap the object pointed to by the arrow with with a light blue denim button-up shirt.\" Ensure that no traces of these elements remain—eliminate any residual pixels, halos, or background inconsistencies so the image appears clean and unaltered except for the intended edit. Then, replace the red hoodie currently worn by the man with a light blue denim button-up shirt. The new shirt should be accurately rendered in size, fit, and perspective to match the man’s body and the scene's depth, featuring visible stitching details typical of denim fabric, a classic collar, front buttons, and appropriate lighting and shadows consistent with the ambient indoor lighting. The shirt should appear naturally layered over the white undershirt already visible, seamlessly integrated into the environment without distortion or unnatural edges.",
     "marker_box": null,
     "arrow_region": null,
     "object_name": null
@@ -54,7 +54,7 @@
     "type": "in_image_text",
     "input_image": "./hwj_images/image_000000.JPEG",
     "ground_truth": "./ground_truth/image_000000.JPEG",
-    "text_instruction": "Generate a realistic image based on the text description in the image",
+    "text_instruction": "A black rifle with a long barrel and a silver muzzle brake is lying on a blue cloth, and it has 'MGM 22 LONG RIFLE MATCH' engraved on its side.",
     "marker_box": null,
     "arrow_region": null,
     "object_name": null
@@ -64,7 +64,7 @@
     "type": "in_image_text",
     "input_image": "./hwj_images/00000303.png",
     "ground_truth": "./ground_truth/00000303.png",
-    "text_instruction": "Edit the image according to the text instruction in the image",
+    "text_instruction": "【Editing Instruction】: Add a vivid, full-arch rainbow above the elephant, positioned in the sky directly over its back and extending horizontally across the upper portion of the image, with colors transitioning smoothly from red on the outer edge to violet on the inner edge, rendered in a realistic style that matches the natural lighting of the scene (bright daylight with clear blue sky), ensuring the rainbow appears slightly translucent and casts no shadows, maintaining consistent perspective and scale with the environment; place it at a height that appears naturally elevated above the elephant’s head and between the elephant and the distant trees, ensuring it does not obscure any key features of the animal or background elements; remove all visible text from the image, including the instruction \"add a rainbow above the elephant,\" so the final result shows only the edited scene without any annotations.",
     "marker_box": null,
     "arrow_region": null,
     "object_name": null
