@@ -88,7 +88,9 @@ class SimpleEvaluator:
     def compute_clip_text_similarity(self, image_path: str, text: str) -> float:
         """计算图片与文本的CLIP相似度"""
         image = self.clip_preprocess(Image.open(image_path)).unsqueeze(0).to(self.device)
-        text_tokens = clip.tokenize([text]).to(self.device)
+        # 修改点：添加 truncate=True 参数
+        # 原始代码：text_tokens = clip.tokenize([text]).to(self.device)
+        text_tokens = clip.tokenize([text], truncate=True).to(self.device)
         
         with torch.no_grad():
             image_features = self.clip_model.encode_image(image)
