@@ -24,17 +24,6 @@ print("="*80)
 print("Step 1: Randomly selecting and copying images")
 print("="*80)
 
-# 0. 自动清理旧目录 (防止文件积压)
-def clean_dir(path):
-    p = Path(path)
-    if p.exists():
-        shutil.rmtree(path)
-    p.mkdir(parents=True, exist_ok=True)
-
-clean_dir(LOCAL_INPUT)
-clean_dir(LOCAL_GT)
-print("✓ Cleaned old directories")
-
 # 1. 获取所有输入图片
 # 修改：不再强制匹配 *_textbox，而是匹配所有图片
 input_path_obj = Path(INPUT_DIR)
