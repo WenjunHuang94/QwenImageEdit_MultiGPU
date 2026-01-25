@@ -3,12 +3,12 @@ import os
 from pathlib import Path
 
 # 配置路径
-INPUT_DIR = "./evaluation_samples_with_textbox_0124V1/input"
-GT_DIR = "./evaluation_samples_with_textbox_0124V1/output"
-OUTPUT_JSON = "./evaluation_samples_with_textbox_0124V1/test_set_auto.json"
+INPUT_DIR = "./evaluation_samples_with_textbox_0124V2/input"
+GT_DIR = "./evaluation_samples_with_textbox_0124V2/output"
+OUTPUT_JSON = "./evaluation_samples_with_textbox_0124V2/test_set_auto.json"
 
 # 默认 Prompt
-DEFAULT_PROMPT = "Modify the image at the annotated location according to the text instruction"
+DEFAULT_PROMPT = "Edit the image according to the text instruction in the image"
 
 test_data = []
 
