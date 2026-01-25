@@ -24,7 +24,7 @@ mkdir -p "$OUTPUT_OURS"
 
 # 获取文件列表
 shopt -s nullglob
-img_files=("$INPUT_DIR"/*.{png,jpg,jpeg,PNG,JPG})
+img_files=("$INPUT_DIR"/*.{png,jpg,jpeg,PNG,JPG,JPEG})
 IMAGE_COUNT=${#img_files[@]}
 
 echo "Found $IMAGE_COUNT images in $INPUT_DIR"
