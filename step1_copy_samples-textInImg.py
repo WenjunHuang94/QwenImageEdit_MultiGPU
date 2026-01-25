@@ -1,6 +1,6 @@
 """
-Step 1: 随机选择10张图片并复制到本地
-(修复版：文件名一致模式 + 自动清理旧数据)
+Step 1: 随机选择图片并复制到本地
+(极速优化版：限制扫描数量，防止在大文件夹中卡死)
 """
 
 import os
@@ -8,9 +8,10 @@ import shutil
 import random
 from pathlib import Path
 
-select_num = 10
-
 # ================= 配置区域 =================
+select_num = 10
+PRE_SCAN_LIMIT = 1000  # 【优化】只预读取前1000个文件，避免遍历几十万文件卡死
+
 # 源路径
 INPUT_DIR = "/storage/v-jinpewang/lab_folder/junchao/data/image_eidt_dataset/processed_data_wo_textbox/addtion/omniedit/input"
 OUTPUT_DIR = "/storage/v-jinpewang/lab_folder/junchao/data/image_eidt_dataset/processed_data_wo_textbox/addtion/omniedit/output"
@@ -21,56 +22,79 @@ LOCAL_GT = "./evaluation_samples_textInImg-0125V1/output"
 # ===========================================
 
 print("="*80)
-print("Step 1: Randomly selecting and copying images")
+print("Step 1: Randomly selecting and copying images (Lazy Mode)")
 print("="*80)
 
-# 1. 获取所有输入图片
-# 修改：不再强制匹配 *_textbox，而是匹配所有图片
+# 0. 自动清理旧目录
+def clean_dir(path):
+    p = Path(path)
+    if p.exists():
+        shutil.rmtree(path)
+    p.mkdir(parents=True, exist_ok=True)
+
+clean_dir(LOCAL_INPUT)
+clean_dir(LOCAL_GT)
+print("✓ Cleaned old directories")
+
 input_path_obj = Path(INPUT_DIR)
 if not input_path_obj.exists():
     print(f"❌ Error: Input directory not found: {INPUT_DIR}")
     exit()
 
-# 搜索常见的图片格式
-input_files = (
-    list(input_path_obj.glob("*.png")) +
-    list(input_path_obj.glob("*.jpg")) +
-    list(input_path_obj.glob("*.jpeg"))
-)
-print(f"\nTotal images in dataset: {len(input_files)}")
+# 1. 快速获取候选文件名 (限制数量)
+candidates = []
+valid_exts = {'.png', '.jpg', '.jpeg', '.PNG', '.JPG', '.JPEG'}
 
-if len(input_files) == 0:
-    print("❌ No images found!")
+print(f"Scanning directory (limit: first {PRE_SCAN_LIMIT} files)...")
+
+try:
+    # 使用 scandir 迭代器，读够了就停
+    with os.scandir(INPUT_DIR) as entries:
+        for entry in entries:
+            if entry.is_file() and os.path.splitext(entry.name)[1] in valid_exts:
+                candidates.append(entry.name)
+
+            # 【核心优化】读够数量立刻停止扫描
+            if len(candidates) >= PRE_SCAN_LIMIT:
+                print(f"  ⚡ Reached scan limit ({PRE_SCAN_LIMIT}), stopping scan.")
+                break
+except Exception as e:
+    print(f"❌ Error scanning directory: {e}")
     exit()
 
-# 2. 随机选择
-selected_files = random.sample(input_files, min(select_num, len(input_files)))
-print(f"Selected {len(selected_files)} images\n")
+if not candidates:
+    print("❌ No images found in the scanned range!")
+    exit()
 
-# 3. 复制文件
+# 2. 打乱顺序
+random.shuffle(candidates)
+print(f"Found {len(candidates)} candidates. Selecting valid pairs...\n")
+
+# 3. 寻找有效配并复制 (找到即停)
 copied_count = 0
-for input_file in selected_files:
-    filename = input_file.name
 
-    # --- A. 复制输入图片 ---
-    input_dest = Path(LOCAL_INPUT) / filename
-    shutil.copy2(input_file, input_dest)
-    print(f"✓ Input: {filename}")
+for filename in candidates:
+    input_file = Path(INPUT_DIR) / filename
+    gt_file = Path(OUTPUT_DIR) / filename  # GT文件名一致
 
-    # --- B. 复制对应的 GT 图片 ---
-    # 【关键修改】GT 文件名和 Input 文件名完全一致，不需要 replace
-    gt_filename = filename
-
-    gt_file = Path(OUTPUT_DIR) / gt_filename
-
+    # 检查 GT 是否存在 (只有这一步会有 IO 开销)
     if gt_file.exists():
-        gt_dest = Path(LOCAL_GT) / filename # 保持同名
-        shutil.copy2(gt_file, gt_dest)
-        print(f"  ✓ GT Found -> Saved as: {filename}")
+        # 复制 Input
+        shutil.copy2(input_file, Path(LOCAL_INPUT) / filename)
+
+        # 复制 GT
+        shutil.copy2(gt_file, Path(LOCAL_GT) / filename)
+
         copied_count += 1
-    else:
-        print(f"  ⚠ GT not found: {gt_filename}")
+        print(f"  [{copied_count}/{select_num}] Copied: {filename}")
+
+    # 【核心优化】凑够了立马退出循环
+    if copied_count >= select_num:
+        break
 
 print(f"\n{'='*80}")
-print(f"✓ Successfully copied {copied_count} pairs of images")
+if copied_count < select_num:
+    print(f"⚠ Warning: Only found {copied_count} valid pairs (Target: {select_num})")
+else:
+    print(f"✓ Successfully copied {copied_count} pairs of images")
 print(f"{'='*80}")
