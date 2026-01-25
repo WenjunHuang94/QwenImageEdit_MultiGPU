@@ -13,7 +13,7 @@ DEFAULT_PROMPT = "Edit the image according to the text instruction in the image"
 test_data = []
 
 # 遍历所有输入图片
-img_extensions = ('.png', '.jpg', '.jpeg', '.JPG', '.PNG')
+img_extensions = ('.png', '.jpg', '.jpeg', '.JPG', '.PNG', '.JPEG')
 files = [f for f in os.listdir(INPUT_DIR) if f.endswith(img_extensions)]
 
 for filename in sorted(files):
