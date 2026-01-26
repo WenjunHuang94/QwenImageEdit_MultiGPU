@@ -82,8 +82,10 @@ def main():
         # 确保不越界
         limit = min(args.num_images, len(data_split))
         print(f"👀 Debug Mode: 只运行前 {limit} 张图片")
-        # 使用 select 进行切片
-        data_split = data_split.select(range(limit))
+        # === 修改为随机抽取 ===
+        # 先打乱顺序 (shuffle)，再取前 N 张
+        # seed=args.seed 保证每次随机的结果是一样的，方便复现
+        data_split = data_split.shuffle(seed=args.seed).select(range(limit))
 
     print(f"Start Inference. Total images: {len(data_split)}")
 
