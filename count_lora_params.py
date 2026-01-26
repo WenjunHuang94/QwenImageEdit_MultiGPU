@@ -8,48 +8,63 @@ from pathlib import Path
 
 def count_lora_parameters(lora_path: str):
     """计算LoRA权重的实际参数量"""
-    
-    print("="*80)
+
+    print("=" * 80)
     print(f"Analyzing LoRA: {lora_path}")
-    print("="*80)
-    
+    print("=" * 80)
+
     # 加载checkpoint
     checkpoint = torch.load(lora_path, map_location='cpu')
-    
+
+    # 兼容性处理：如果checkpoint包含 'state_dict' 或 'model' 键，则提取那一层
+    # 很多保存代码会写成 {'state_dict': ..., 'epoch': ...}
+    if isinstance(checkpoint, dict):
+        if "state_dict" in checkpoint:
+            print("Detected 'state_dict' key, extracting weights...")
+            checkpoint = checkpoint["state_dict"]
+        elif "model_state_dict" in checkpoint:
+            print("Detected 'model_state_dict' key, extracting weights...")
+            checkpoint = checkpoint["model_state_dict"]
+
     # 统计参数
     total_params = 0
     trainable_params = 0
-    
+
     print("\nParameter breakdown:")
-    print("-"*80)
-    
+    print("-" * 80)
+
     for name, param in checkpoint.items():
+        # --- 修复核心：增加类型检查 ---
+        if not isinstance(param, torch.Tensor):
+            # 如果不是张量（比如是配置字典），则跳过并不报错
+            print(f"Skipping non-tensor key: {name} (Type: {type(param).__name__})")
+            continue
+        # ---------------------------
+
         num_params = param.numel()
         total_params += num_params
-        
+
         # LoRA参数通常包含 lora_A 和 lora_B
         if 'lora' in name.lower():
             trainable_params += num_params
             print(f"{name:60s} {num_params:>15,} ({param.shape})")
-    
-    print("-"*80)
+
+    print("-" * 80)
     print(f"\nTotal parameters: {total_params:,}")
     print(f"Trainable (LoRA) parameters: {trainable_params:,}")
     print(f"Parameter size: {trainable_params / 1e6:.2f}M")
     print(f"Parameter size: {trainable_params / 1e9:.3f}B")
-    
+
     # 文件大小
     file_size = Path(lora_path).stat().st_size
     print(f"\nFile size: {file_size / 1024 / 1024:.2f} MB")
-    print(f"File size: {file_size / 1024 / 1024 / 1024:.3f} GB")
-    
+
     # 计算存储效率
     bytes_per_param = file_size / trainable_params if trainable_params > 0 else 0
     print(f"\nBytes per parameter: {bytes_per_param:.2f}")
-    print(f"Data type: {'float32 (4 bytes)' if bytes_per_param > 3 else 'float16 (2 bytes)'}")
-    
-    print("="*80)
-    
+
+    print("=" * 80)
+
     return trainable_params
 
 
