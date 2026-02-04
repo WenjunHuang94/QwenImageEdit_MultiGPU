@@ -130,7 +130,8 @@ class VanillaPipeline(QwenImageEditPlusPipeline):
                         encoder_hidden_states_mask=prompt_embeds_mask,
                         encoder_hidden_states=prompt_embeds,
                         img_shapes=img_shapes,
-                        txt_seq_lens=prompt_embeds_mask.sum(dim=1).tolist(),
+                        # txt_seq_lens=prompt_embeds_mask.sum(dim=1).tolist(),
+                        txt_seq_lens=(prompt_embeds_mask.sum(dim=1).tolist() if prompt_embeds_mask is not None else [prompt_embeds.shape[1]] * prompt_embeds.shape[0]),
                         return_dict=False,
                     )[0]
                     noise_pred = noise_pred[:, : latents.size(1)]
@@ -144,7 +145,8 @@ class VanillaPipeline(QwenImageEditPlusPipeline):
                             encoder_hidden_states_mask=negative_prompt_embeds_mask,
                             encoder_hidden_states=negative_prompt_embeds,
                             img_shapes=img_shapes,
-                            txt_seq_lens=negative_prompt_embeds_mask.sum(dim=1).tolist(),
+                            # txt_seq_lens=negative_prompt_embeds_mask.sum(dim=1).tolist(),
+                            txt_seq_lens=(negative_prompt_embeds_mask.sum(dim=1).tolist() if negative_prompt_embeds_mask is not None else [negative_prompt_embeds.shape[1]] * negative_prompt_embeds.shape[0]),
                             return_dict=False,
                         )[0]
                     neg_noise_pred = neg_noise_pred[:, : latents.size(1)]
