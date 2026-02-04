@@ -1,30 +1,26 @@
 [
   {
-    "img_path": "./hwj_images/000001_00000303_textbox.png",
-    "prompt": "Modify the image at the annotated location according to the text instruction"
+    "img_path": "./0204-images/1.png",
+    "prompt": "Extract the cat from the image"
   },
   {
-    "img_path": "./hwj_images/00000005.png",
-    "prompt": "Follow the visual pointer and text to edit the image"
+    "img_path": "./0204-images/2.png",
+    "prompt": "Add another creature next to the main character"
   },
   {
-    "img_path": "./hwj_images/task_obj_add_108-1.png",
-    "prompt": "Edit the image according to the text instruction in the image"
+    "img_path": "./0204-images/3.png",
+    "prompt": "A robot holds the device in its arms across its chest"
   },
   {
-    "img_path": "./hwj_images/task_obj_remove_108.png",
-    "prompt": "Follow the visual pointer and text to edit the image"
+    "img_path": "./0204-images/4.png",
+    "prompt": "Turn the object in red box into a pirate ship"
   },
   {
-    "img_path": "./hwj_images/task_obj_swap_joint_mask_9812-1.png",
-    "prompt": "Follow the visual pointer and text to edit the image"
+    "img_path": "./0204-images/5.png",
+    "prompt": "A wooden table with a pot of flowers, the flowers need to be consistent with the\nspecies and color of the flowers in the image"
   },
   {
-    "img_path": "./hwj_images/image_000000.JPEG",
-    "prompt": "Generate a realistic image based on the text description in the image"
-  },
-  {
-    "img_path": "./hwj_images/00000303.png",
-    "prompt": "Edit the image according to the text instruction in the image"
+    "img_path": "./0204-images/6.png",
+    "prompt": "Change the camera angle to a low angle, looking up at the dog"
   }
 ]
