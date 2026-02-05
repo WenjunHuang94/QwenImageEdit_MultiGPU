@@ -1,26 +1,14 @@
 [
   {
-    "img_path": "./0204-images/1.png",
-    "prompt": "Extract the cat from the image"
+    "img_path": "./0204-images/7.png",
+    "prompt": "Let this man wear sunglasses and make a heart gesture with his hands"
   },
   {
-    "img_path": "./0204-images/2.png",
-    "prompt": "Add another creature next to the main character"
+    "img_path": "./0204-images/8.png",
+    "prompt": "Transform the image into a retro-colored illustration style"
   },
   {
-    "img_path": "./0204-images/3.png",
-    "prompt": "A robot holds the device in its arms across its chest"
-  },
-  {
-    "img_path": "./0204-images/4.png",
-    "prompt": "Turn the object in red box into a pirate ship"
-  },
-  {
-    "img_path": "./0204-images/5.png",
-    "prompt": "A wooden table with a pot of flowers, the flowers need to be consistent with the\nspecies and color of the flowers in the image"
-  },
-  {
-    "img_path": "./0204-images/6.png",
-    "prompt": "Change the camera angle to a low angle, looking up at the dog"
+    "img_path": "./0204-images/9.png",
+    "prompt": "Remove the laptop, add a mug, change the wall to yellow, add a girl sitting on the bed, turn on the TV, and change the style to Ghibli."
   }
 ]
